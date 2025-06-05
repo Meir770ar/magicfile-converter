@@ -1,0 +1,11 @@
+FROM debian:bookworm-slim
+
+# עדכון מערכת והתקנת LibreOffice וכלי PDF
+RUN apt-get update &&     DEBIAN_FRONTEND=noninteractive apt-get install -y         libreoffice-core libreoffice-writer libreoffice-calc libreoffice-impress         libreoffice-draw libreoffice-base ghostscript libreoffice-java-common default-jre-headless &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# מגדיר תיקיות קלט/פלט
+VOLUME ["/input", "/output"]
+WORKDIR /input
+
+# פקודת ברירת־מחדל להפעלת LibreOffice כשירות מאזין
+CMD ["libreoffice", "--headless", "--invisible", "--nologo", "--norestore", "--accept=socket,host=0.0.0.0,port=2002;urp;StarOffice.ServiceManager"]

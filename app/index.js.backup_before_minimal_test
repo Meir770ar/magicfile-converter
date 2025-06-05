@@ -1,0 +1,195 @@
+const express = require('express');
+const multer  = require('multer');
+const { v4: uuidv4 } = require('uuid');
+const path    = require('path');
+const { exec }= require('child_process');
+const cors    = require('cors');
+const fs = require('fs');
+const PDFMerger = require('pdf-merger-js');
+
+// --- קבועים ---
+const IN_DIR  = '/srv/converter/input';
+const OUT_DIR = '/srv/converter/output';
+const PORT    = process.env.PORT || 3000;
+
+const UPLOADS_DIR_FOR_MERGE = path.join(__dirname, 'uploads');
+const MERGED_OUTPUT_DIR_FOR_MERGE = path.join(__dirname, 'merged_output');
+
+const app = express();
+app.use(cors({
+  origin: 'https://magicfile.ai', // מאפשר גישה רק מהדומיין הראשי שלך
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // מאפשר את שיטות ה-HTTP האלה
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'], // מאפשר את הכותרות האלה
+  credentials: true // אם תצטרך להשתמש בקוקיז או אימות בעתיד
+}));
+
+// ודא שאתה מטפל גם בבקשות OPTIONS (preflight requests) לפני ה-routes שלך,
+// לפעמים זה נדרש לבקשות CORS מורכבות יותר.
+// הוסף את זה מיד אחרי app.use(cors(...)) ולפני הגדרת ה-routes שלך.
+app.options('*', cors({
+  origin: 'https://magicfile.ai',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use('/files', express.static(OUT_DIR));
+
+if (!fs.existsSync(UPLOADS_DIR_FOR_MERGE)) {
+    fs.mkdirSync(UPLOADS_DIR_FOR_MERGE, { recursive: true });
+    console.log(`Created directory for merge uploads: ${UPLOADS_DIR_FOR_MERGE}`);
+}
+if (!fs.existsSync(MERGED_OUTPUT_DIR_FOR_MERGE)) {
+    fs.mkdirSync(MERGED_OUTPUT_DIR_FOR_MERGE, { recursive: true });
+    console.log(`Created directory for merged output: ${MERGED_OUTPUT_DIR_FOR_MERGE}`);
+}
+
+const convertStorage = multer.diskStorage({
+  destination: (_, __, cb) => cb(null, IN_DIR),
+  filename: (_, file, cb) => cb(null, uuidv4() + path.extname(file.originalname))
+});
+const uploadConvert = multer({ storage: convertStorage });
+
+app.post('/convert', uploadConvert.single('file'), (req, res) => {
+  console.log(`[${new Date().toISOString()}] Received request to /convert`);
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded for conversion.' });
+  }
+  const target = req.query.target || 'pdf';
+  const inFile = req.file.filename;
+  const outFile= `${path.parse(inFile).name}.${target}`;
+  // ⚠️ עדיין צריך לתקן את הלוגיקה הזו כדי להשתמש בשירות LibreOffice הנפרד!
+  const cmd    = `libreoffice --headless --convert-to ${target} --outdir ${OUT_DIR} ${IN_DIR}/${inFile}`;
+
+  console.log(`Executing: ${cmd}`);
+  exec(cmd, (err) => {
+    if (err) {
+      console.error(`[${new Date().toISOString()}] Conversion failed for ${inFile}:`, err);
+      fs.unlink(path.join(IN_DIR, inFile), unlinkErr => {
+        if (unlinkErr) console.error(`[${new Date().toISOString()}] Error deleting source file ${inFile} on conversion error:`, unlinkErr);
+      });
+      return res.status(500).json({ error: 'ההמרה נכשלה', details: err.message });
+    }
+    console.log(`[${new Date().toISOString()}] Conversion successful for ${inFile}, output: ${outFile}`);
+    res.json({ download_url: `https://api.magicfile.ai/files/${outFile}` });
+  });
+});
+
+const mergeStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, UPLOADS_DIR_FOR_MERGE);
+    },
+    filename: function (req, file, cb) {
+        cb(null, `${uuidv4()}-${file.originalname}`);
+    }
+});
+
+const uploadMerge = multer({
+    storage: mergeStorage,
+    limits: {
+        fileSize: 25 * 1024 * 1024 // 25MB
+    },
+    fileFilter: function (req, file, cb) {
+        if (path.extname(file.originalname).toLowerCase() !== '.pdf') {
+            return cb(new Error('Only PDF files are allowed for merging!'), false);
+        }
+        cb(null, true);
+    }
+});
+
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'OK', message: 'MagicFile API is running' });
+});
+
+app.post('/api/pdf/merge', uploadMerge.array('pdfs', 10), async (req, res, next) => {
+    console.log(`[${new Date().toISOString()}] Received request to /api/pdf/merge`);
+    if (!req.files || req.files.length < 2) {
+        if (req.files && req.files.length > 0) { 
+            req.files.forEach(file => fs.unlink(file.path, err => {
+                if (err) console.error(`[${new Date().toISOString()}] Error deleting uploaded file ${file.path} on validation fail (less than 2 files):`, err);
+            }));
+        }
+        return res.status(400).json({ success: false, message: 'Please upload at least two PDF files to merge.' });
+    }
+
+    const merger = new PDFMerger();
+
+    const uploadedFilePaths = req.files.map(file => file.path);
+    let tempMergedFilePath;
+
+    try {
+        console.log(`[${new Date().toISOString()}] Attempting to merge ${req.files.length} files for PDF merge:`);
+        req.files.forEach(file => console.log(`  - ${file.originalname} (saved as ${file.filename}) in ${file.path}`));
+
+        for (const file of req.files) {
+            await merger.add(file.path);
+        }
+
+        const mergedFileName = `merged-${uuidv4()}.pdf`;
+        tempMergedFilePath = path.join(MERGED_OUTPUT_DIR_FOR_MERGE, mergedFileName);
+
+        await merger.save(tempMergedFilePath);
+        console.log(`[${new Date().toISOString()}] Merged PDF saved to: ${tempMergedFilePath}`);
+
+        res.download(tempMergedFilePath, mergedFileName, (downloadErr) => {
+            if (downloadErr) {
+                console.error(`[${new Date().toISOString()}] Error sending merged file to client:`, downloadErr);
+            } else {
+                console.log(`[${new Date().toISOString()}] Merged file successfully sent to client: ${mergedFileName}`);
+            }
+
+            fs.unlink(tempMergedFilePath, unlinkErr => {
+                if (unlinkErr) console.error(`[${new Date().toISOString()}] Error deleting merged file from server ${tempMergedFilePath}:`, unlinkErr);
+                else console.log(`[${new Date().toISOString()}] Successfully deleted merged file: ${tempMergedFilePath}`);
+            });
+
+            uploadedFilePaths.forEach(filePath => {
+                fs.unlink(filePath, unlinkErr => {
+                    if (unlinkErr) console.error(`[${new Date().toISOString()}] Error deleting uploaded source file ${filePath}:`, unlinkErr);
+                    else console.log(`[${new Date().toISOString()}] Successfully deleted uploaded source file: ${filePath}`);
+                });
+            });
+        });
+
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Error during PDF merge process:`, error);
+        uploadedFilePaths.forEach(filePath => {
+            fs.unlink(filePath, unlinkErr => {
+                if (unlinkErr) console.error(`[${new Date().toISOString()}] Error deleting uploaded source file ${filePath} on merge error:`, unlinkErr);
+            });
+        });
+        if (tempMergedFilePath && fs.existsSync(tempMergedFilePath)) {
+            fs.unlink(tempMergedFilePath, unlinkErr => {
+                if (unlinkErr) console.error(`[${new Date().toISOString()}] Error deleting partially merged file ${tempMergedFilePath} on error:`, unlinkErr);
+            });
+        }
+        if (!res.headersSent) {
+           next(error); 
+        }
+    }
+});
+
+app.use((err, req, res, next) => {
+    console.error(`[${new Date().toISOString()}] Error caught by global error handler:`, err);
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ success: false, message: `File upload error: ${err.message}. Please check file size or type.` });
+    } else if (err && err.message) { 
+        if (err.message.toLowerCase().includes('is not a constructor') && err.message.toLowerCase().includes('pdfmerger')) {
+             return res.status(500).json({ success: false, message: 'Server configuration error: PDF processing library failed to initialize.' });
+        }
+        return res.status(400).json({ success: false, message: err.message });
+    } else if (err) { 
+        return res.status(500).json({ success: false, message: 'An unexpected server error occurred.' });
+    }
+    if (!res.headersSent) {
+      next(err); 
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`MagicFile API (PM2 managed) is listening on port ${PORT}`);
+});
+

@@ -1,0 +1,43 @@
+const express = require('express');
+const cors = require('cors');
+const path = require('path'); // הוספנו
+const fs = require('fs');     // הוספנו
+const { v4: uuidv4 } = require('uuid'); // הוספנו (נצטרך ל-multer בהמשך)
+// את אלה נוסיף כשנגיע למימוש הפונקציות עצמן:
+// const multer  = require('multer');
+// const PDFMerger = require('pdf-merger-js');
+// const { exec }= require('child_process');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// --- קבועים נוספים ---
+const IN_DIR  = '/srv/converter/input';
+const OUT_DIR = '/srv/converter/output';
+const UPLOADS_DIR_FOR_MERGE = path.join(__dirname, 'uploads');
+const MERGED_OUTPUT_DIR_FOR_MERGE = path.join(__dirname, 'merged_output');
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// הגדרת הנתיב הסטטי /files ובדיקה/יצירה של תיקיות
+app.use('/files', express.static(OUT_DIR));
+
+if (!fs.existsSync(UPLOADS_DIR_FOR_MERGE)) {
+    fs.mkdirSync(UPLOADS_DIR_FOR_MERGE, { recursive: true });
+    console.log(`Created directory for merge uploads: ${UPLOADS_DIR_FOR_MERGE}`);
+}
+if (!fs.existsSync(MERGED_OUTPUT_DIR_FOR_MERGE)) {
+    fs.mkdirSync(MERGED_OUTPUT_DIR_FOR_MERGE, { recursive: true });
+    console.log(`Created directory for merged output: ${MERGED_OUTPUT_DIR_FOR_MERGE}`);
+}
+// --- סוף הקטע ששאלת עליו ---
+
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'OK', message: 'MagicFile API with basic setup is running' });
+});
+
+app.listen(PORT, () => {
+    console.log(`MagicFile API (PM2 managed) is listening on port ${PORT}`);
+});

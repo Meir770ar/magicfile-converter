@@ -1,0 +1,23 @@
+services:
+  converter:
+    image: mylibreoffice:latest # נשאיר את שם האימג' כפי שהוא, הוא ייבנה מחדש
+    build:
+      context: ./build
+    restart: unless-stopped
+    # שורת ה-command הוסרה מכאן - הקונטיינר ישתמש ב-CMD מה-Dockerfile
+    volumes:
+      - ./input:/input
+      - ./output:/output
+
+  app:
+    build:
+      context: .
+      dockerfile: appbuild/Dockerfile
+    working_dir: /usr/src/app
+    volumes:
+      - ./app:/usr/src/app
+      - ./input:/srv/converter/input
+      - ./output:/srv/converter/output
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
