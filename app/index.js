@@ -18,12 +18,16 @@ const MERGED_OUTPUT_DIR_FOR_MERGE = path.join(__dirname, "merged_output");
 const app = express();
 
 /* ----------  CORS  ---------- */
-app.use(cors({
+const corsOptions = {
   origin: "https://magicfile.ai",
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization","X-Requested-With"],
-  credentials: true
-}));
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+// handle preflight requests for all routes
+app.options(/.*/, cors(corsOptions));
 
 /* ----------  MIDDLEWARES  ---------- */
 app.use(express.json());
@@ -52,7 +56,8 @@ app.post("/convert", uploadConvert.single("file"), (req,res)=>{
   const target  = req.query.target || "pdf";
   const inFile  = req.file.filename;
   const outFile = `${path.parse(inFile).name}.${target}`;
-  const cmd     = `libreoffice --headless --convert-to ${target} --outdir ${OUT_DIR} ${IN_DIR}/${inFile}`;
+  // use the dedicated converter container via docker exec
+  const cmd     = `docker exec converter-converter-1 unoconv -f ${target} -o /output/${outFile} /input/${inFile}`;
 
   exec(cmd,(err)=>{
     if(err){
