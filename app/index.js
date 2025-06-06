@@ -75,6 +75,13 @@ app.post("/convert", uploadConvert.single("file"), (req, res) => {
 
     log(`Conversion successful: ${outFile}`);
     res.json({ success: true, download_url: `https://api.magicfile.ai/files/${outFile}` });
+
+    // schedule removal of output after 10 minutes to save space
+    setTimeout(() => {
+      fs.unlink(path.join(OUT_DIR, outFile), () => {
+        log(`Cleaned output file: ${outFile}`);
+      });
+    }, 10 * 60 * 1000);
   });
 });
 
