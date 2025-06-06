@@ -2,7 +2,6 @@ const express = require('express');
 const multer = require('multer');
 const PDFMerger = require('pdf-merger-js');
 const { v4: uuidv4 } = require('uuid');
-const path = require('path');
 const fs = require('fs');
 
 const app = express();
@@ -35,6 +34,7 @@ app.post('/merge', upload.array('files'), async (req, res) => {
 });
 
 // מאזין
-app.listen(3000, () => {
-    console.log('🚀 MagicFile.ai API running on port 3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 MagicFile.ai API running on port ${PORT}`);
 });
