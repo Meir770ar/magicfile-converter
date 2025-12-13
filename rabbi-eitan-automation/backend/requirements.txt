@@ -1,0 +1,118 @@
+# ================================
+# Rabbi Eitan - Backend Dependencies
+# ================================
+
+# --------------------------
+# Web Framework
+# --------------------------
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+starlette==0.35.1
+
+# --------------------------
+# Database
+# --------------------------
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# --------------------------
+# Task Queue (Celery)
+# --------------------------
+celery[redis]==5.3.6
+redis==5.0.1
+flower==2.0.1
+
+# --------------------------
+# Module A: Content Engine
+# --------------------------
+# HTML Scraping
+beautifulsoup4==4.12.3
+lxml==5.1.0
+requests==2.31.0
+httpx==0.26.0
+
+# RSS Fallback
+feedparser==6.0.10
+
+# AI Processing
+google-generativeai==0.3.2
+
+# --------------------------
+# Module B: Telegram Bot
+# --------------------------
+python-telegram-bot==20.7
+
+# Whisper (Voice Transcription)
+openai-whisper==20231117
+openai==1.9.0
+
+# Audio file handling
+pydub==0.25.1
+soundfile==0.12.1
+
+# --------------------------
+# Module C: Media Factory
+# --------------------------
+# ElevenLabs
+elevenlabs==1.0.0
+
+# HeyGen (HTTP client)
+# Using httpx for API calls
+
+# FFmpeg Python wrapper
+ffmpeg-python==0.2.0
+moviepy==1.0.3
+
+# --------------------------
+# Module D: Distribution
+# --------------------------
+# Telegram - using python-telegram-bot above
+# WhatsApp - using httpx for API calls
+
+# --------------------------
+# Validation & Serialization
+# --------------------------
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# --------------------------
+# Security
+# --------------------------
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# --------------------------
+# Utilities
+# --------------------------
+tenacity==8.2.3
+python-dateutil==2.8.2
+pytz==2023.3.post1
+aiofiles==23.2.1
+orjson==3.9.12
+
+# --------------------------
+# Logging & Monitoring
+# --------------------------
+loguru==0.7.2
+sentry-sdk[fastapi]==1.39.1
+
+# --------------------------
+# Testing
+# --------------------------
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+httpx==0.26.0
+factory-boy==3.3.0
+
+# --------------------------
+# Development
+# --------------------------
+black==23.12.1
+isort==5.13.2
+flake8==7.0.0
+mypy==1.8.0
+pre-commit==3.6.0

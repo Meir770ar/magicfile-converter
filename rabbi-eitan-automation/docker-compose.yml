@@ -1,0 +1,205 @@
+version: '3.8'
+
+services:
+  # ======================
+  # Backend - FastAPI
+  # ======================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rabbi-eitan-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://rabbi_user:rabbi_pass@postgres:5432/rabbi_eitan
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    volumes:
+      - ./backend/app:/app/app
+      - media_data:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rabbi-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ======================
+  # Celery Worker
+  # ======================
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rabbi-eitan-worker
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      - DATABASE_URL=postgresql://rabbi_user:rabbi_pass@postgres:5432/rabbi_eitan
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      # HeyGen timeout: 30 minutes
+      - CELERY_TASK_TIME_LIMIT=1800
+      - CELERY_TASK_SOFT_TIME_LIMIT=1740
+    env_file:
+      - .env
+    volumes:
+      - ./backend/app:/app/app
+      - media_data:/app/media
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - rabbi-network
+
+  # ======================
+  # Celery Beat (Scheduler)
+  # ======================
+  beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rabbi-eitan-beat
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://rabbi_user:rabbi_pass@postgres:5432/rabbi_eitan
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      - worker
+    networks:
+      - rabbi-network
+
+  # ======================
+  # PostgreSQL Database
+  # ======================
+  postgres:
+    image: postgres:15-alpine
+    container_name: rabbi-eitan-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=rabbi_user
+      - POSTGRES_PASSWORD=rabbi_pass
+      - POSTGRES_DB=rabbi_eitan
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - rabbi-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rabbi_user -d rabbi_eitan"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ======================
+  # Redis (Queue & Cache)
+  # ======================
+  redis:
+    image: redis:7-alpine
+    container_name: rabbi-eitan-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - rabbi-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ======================
+  # Frontend - Next.js
+  # ======================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rabbi-eitan-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NODE_ENV=development
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend
+    networks:
+      - rabbi-network
+
+  # ======================
+  # Nginx Reverse Proxy
+  # ======================
+  nginx:
+    image: nginx:alpine
+    container_name: rabbi-eitan-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - rabbi-network
+
+  # ======================
+  # Flower (Celery Monitoring)
+  # ======================
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rabbi-eitan-flower
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - worker
+    networks:
+      - rabbi-network
+
+# ======================
+# Networks
+# ======================
+networks:
+  rabbi-network:
+    driver: bridge
+
+# ======================
+# Volumes
+# ======================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  media_data:
+    driver: local
