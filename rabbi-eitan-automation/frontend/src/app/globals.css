@@ -28,6 +28,7 @@
 
   * {
     @apply border-border;
+    box-sizing: border-box;
   }
 
   html {
@@ -36,20 +37,29 @@
   }
 
   body {
-    @apply bg-zinc-950 text-foreground font-sans antialiased;
+    background-color: #09090b !important;
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
       radial-gradient(ellipse 60% 40% at 100% 100%, rgba(139, 92, 246, 0.1), transparent);
+    color: #fafafa;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer components {
   /* Glassmorphism Card */
   .glass-card {
-    @apply relative overflow-hidden rounded-xl;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
     background: rgba(24, 24, 27, 0.8);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.05),
@@ -64,14 +74,22 @@
     right: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
   }
 
   /* Glowing Button */
   .glow-button {
-    @apply relative px-6 py-3 rounded-lg font-semibold text-white overflow-hidden;
+    position: relative;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: white;
+    overflow: hidden;
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
     box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
     transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
   }
 
   .glow-button:hover {
@@ -79,99 +97,126 @@
     transform: translateY(-2px);
   }
 
-  .glow-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-  }
-
-  .glow-button:hover::before {
-    left: 100%;
+  .glow-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
   }
 
   /* Status Indicators */
   .status-dot {
-    @apply w-2 h-2 rounded-full;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
   }
 
   .status-dot.online {
-    @apply bg-emerald-500;
+    background-color: #10b981;
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
     animation: pulse 2s ease-in-out infinite;
   }
 
   .status-dot.processing {
-    @apply bg-amber-500;
+    background-color: #f59e0b;
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
     animation: pulse 1s ease-in-out infinite;
   }
 
   .status-dot.error {
-    @apply bg-rose-500;
+    background-color: #f43f5e;
     box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
   }
 
   /* Terminal Style */
   .terminal {
-    @apply font-mono text-sm;
+    font-family: 'JetBrains Mono', 'Menlo', 'Monaco', monospace;
+    font-size: 14px;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(9, 9, 11, 0.95) 100%);
     border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
   }
 
   .terminal-line {
-    @apply py-1 px-4 border-b border-white/5;
+    padding: 4px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .terminal-line:hover {
-    @apply bg-white/5;
+    background: rgba(255, 255, 255, 0.05);
   }
 
   /* Pipeline Step */
   .pipeline-step {
-    @apply relative flex items-center gap-4 p-4 rounded-lg transition-all duration-300;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
   }
 
   .pipeline-step.active {
-    @apply bg-indigo-500/10;
+    background: rgba(99, 102, 241, 0.1);
     box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.1);
   }
 
   .pipeline-step.completed {
-    @apply bg-emerald-500/5;
+    background: rgba(16, 185, 129, 0.05);
   }
 
   /* Sidebar */
   .sidebar-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 transition-all duration-200;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #a1a1aa;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: right;
   }
 
   .sidebar-item:hover {
-    @apply bg-white/5 text-white;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
   }
 
   .sidebar-item.active {
-    @apply bg-indigo-500/10 text-indigo-400;
+    background: rgba(99, 102, 241, 0.1);
+    color: #818cf8;
     box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.1);
   }
 
   /* Credit Card */
   .credit-card {
-    @apply glass-card p-6;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    padding: 24px;
     background: linear-gradient(135deg, rgba(24, 24, 27, 0.9) 0%, rgba(24, 24, 27, 0.7) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   /* Waveform */
   .waveform {
-    @apply flex items-end gap-1 h-8;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 32px;
   }
 
   .waveform-bar {
-    @apply w-1 bg-indigo-500 rounded-full transition-all duration-100;
+    width: 4px;
+    background-color: #6366f1;
+    border-radius: 2px;
+    transition: all 0.1s ease;
     animation: wave 0.5s ease-in-out infinite;
   }
 
@@ -202,43 +247,47 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400;
+    background: linear-gradient(90deg, #818cf8, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
+}
 
-  .border-gradient {
-    border-image: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5)) 1;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-
-  .animate-in {
-    animation: fadeIn 0.3s ease-out forwards;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
   }
-
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
+  50% {
+    opacity: 0.5;
   }
+}
 
-  @keyframes wave {
-    0%, 100% {
-      height: 8px;
-    }
-    50% {
-      height: 24px;
-    }
+@keyframes wave {
+  0%, 100% {
+    height: 8px;
+  }
+  50% {
+    height: 24px;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }

@@ -36,122 +36,153 @@ interface SidebarProps {
 export function Sidebar({ activeTab, onTabChange, systemStatus }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
+  const sidebarWidth = isCollapsed ? 80 : 280
+
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: isCollapsed ? 80 : 280 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="fixed right-0 top-0 h-screen glass-card rounded-none border-l-0 border-t-0 border-b-0 z-50"
+    <aside
+      style={{
+        width: sidebarWidth,
+        position: 'fixed',
+        right: 0,
+        top: 0,
+        height: '100vh',
+        background: 'rgba(24, 24, 27, 0.95)',
+        backdropFilter: 'blur(12px)',
+        borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+        zIndex: 50,
+        transition: 'width 0.3s ease',
+      }}
     >
-      <div className="flex flex-col h-full p-4">
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '16px' }}>
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-8 px-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-glow-sm">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px', padding: '0 8px' }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 15px rgba(99, 102, 241, 0.3)',
+              flexShrink: 0,
+            }}
+          >
             <Zap className="w-6 h-6 text-white" />
           </div>
-          <AnimatePresence>
-            {!isCollapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <h1 className="text-lg font-bold text-white">Rabbi Eitan</h1>
-                <p className="text-xs text-zinc-500">AI Content Engine</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {!isCollapsed && (
+            <div>
+              <h1 style={{ fontSize: 18, fontWeight: 700, color: 'white', margin: 0 }}>Rabbi Eitan</h1>
+              <p style={{ fontSize: 12, color: '#71717a', margin: 0 }}>AI Content Engine</p>
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-2">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onTabChange(item.id)}
-              className={cn(
-                'sidebar-item w-full',
-                activeTab === item.id && 'active'
-              )}
-            >
-              <span className={cn(
-                'transition-colors',
-                activeTab === item.id ? 'text-indigo-400' : 'text-zinc-400'
-              )}>
-                {item.icon}
-              </span>
-              <AnimatePresence>
+        <nav style={{ flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => onTabChange(item.id)}
+                className={cn('sidebar-item', activeTab === item.id && 'active')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: activeTab === item.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                  color: activeTab === item.id ? '#818cf8' : '#a1a1aa',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'right',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <span style={{ color: activeTab === item.id ? '#818cf8' : '#a1a1aa' }}>
+                  {item.icon}
+                </span>
                 {!isCollapsed && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex-1 text-right"
-                  >
+                  <span style={{ flex: 1, textAlign: 'right' }}>
                     {item.label}
-                  </motion.span>
+                  </span>
                 )}
-              </AnimatePresence>
-              {item.badge && !isCollapsed && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="px-2 py-0.5 text-xs rounded-full bg-indigo-500/20 text-indigo-400"
-                >
-                  {item.badge}
-                </motion.span>
-              )}
-            </button>
-          ))}
+                {item.badge && !isCollapsed && (
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      fontSize: 12,
+                      borderRadius: '9999px',
+                      background: 'rgba(99, 102, 241, 0.2)',
+                      color: '#818cf8',
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </nav>
 
         {/* System Status */}
-        <div className="mt-auto pt-4 border-t border-white/5">
-          <div className={cn(
-            'flex items-center gap-3 px-4 py-3 rounded-lg',
-            isCollapsed ? 'justify-center' : ''
-          )}>
+        <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px' }}>
             <div className={cn('status-dot', systemStatus)} />
-            <AnimatePresence>
-              {!isCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex-1"
+            {!isCollapsed && (
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 14, color: '#a1a1aa', margin: 0 }}>System Status</p>
+                <p
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                    margin: 0,
+                    color:
+                      systemStatus === 'online'
+                        ? '#34d399'
+                        : systemStatus === 'processing'
+                        ? '#fbbf24'
+                        : '#f87171',
+                  }}
                 >
-                  <p className="text-sm text-zinc-400">System Status</p>
-                  <p className={cn(
-                    'text-xs font-medium',
-                    systemStatus === 'online' && 'text-emerald-400',
-                    systemStatus === 'processing' && 'text-amber-400',
-                    systemStatus === 'error' && 'text-rose-400'
-                  )}>
-                    {systemStatus === 'online' && 'Online'}
-                    {systemStatus === 'processing' && 'Processing'}
-                    {systemStatus === 'error' && 'Error'}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {systemStatus === 'online' && 'Online'}
+                  {systemStatus === 'processing' && 'Processing'}
+                  {systemStatus === 'error' && 'Error'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Collapse Toggle */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-12 bg-zinc-800 border border-white/10 rounded-full flex items-center justify-center hover:bg-zinc-700 transition-colors"
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 24,
+            height: 48,
+            background: '#27272a',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '9999px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
         >
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 text-zinc-400" />
+            <ChevronRight className="w-4 h-4" style={{ color: '#a1a1aa' }} />
           ) : (
-            <ChevronLeft className="w-4 h-4 text-zinc-400" />
+            <ChevronLeft className="w-4 h-4" style={{ color: '#a1a1aa' }} />
           )}
         </button>
       </div>
-    </motion.aside>
+    </aside>
   )
 }

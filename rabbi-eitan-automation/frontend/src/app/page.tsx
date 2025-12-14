@@ -303,7 +303,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div style={{ minHeight: '100vh', background: '#09090b' }}>
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -312,7 +312,7 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      <main className="mr-[280px] transition-all duration-300 p-8">
+      <main style={{ marginRight: 280, padding: 32, transition: 'margin 0.3s ease' }}>
         {/* Page Header */}
         <div className="mb-8">
           <motion.div
