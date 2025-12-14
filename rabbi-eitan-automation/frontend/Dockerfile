@@ -34,6 +34,9 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Ensure public directory exists
+RUN mkdir -p public
+
 RUN npm run build
 
 # Production image
@@ -47,8 +50,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built files
-COPY --from=builder /app/public ./public
+# Copy built files (create public dir if it doesn't exist)
+RUN mkdir -p ./public
+COPY --from=builder /app/public ./public/
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
