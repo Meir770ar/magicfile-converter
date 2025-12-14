@@ -1,328 +1,360 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { PipelineStatus, PipelineProgress } from '@/components/ui/pipeline-status'
-import { pipelineApi, creditsApi, type PipelineStatus as PipelineStatusType, type CreditsStatus } from '@/lib/api'
-import { formatDate } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Sidebar } from '@/components/layout/sidebar'
+import { PipelineVisualizer, PipelineStep, StepStatus } from '@/components/dashboard/pipeline-visualizer'
+import { Terminal, LogEntry, LogType } from '@/components/dashboard/terminal'
+import { CreditsCard } from '@/components/dashboard/credits-card'
+import { ApprovalInterface } from '@/components/approval/approval-interface'
+import { MediaLibrary, MediaItem } from '@/components/library/media-library'
+import { pipelineApi, creditsApi, type CreditsStatus } from '@/lib/api'
+import { CreditCard, Clock, Zap } from 'lucide-react'
 
-// Initial state
-const initialPipelineStatus: PipelineStatusType = {
-  current_step: 0,
-  total_steps: 6,
-  status: 'idle',
-  steps: [
-    { step: 1, name: 'גרידת תוכן', status: 'pending' },
-    { step: 2, name: 'יצירת תסריט', status: 'pending' },
-    { step: 3, name: 'ממתין לאישור', status: 'pending' },
-    { step: 4, name: 'יצירת אודיו', status: 'pending' },
-    { step: 5, name: 'יצירת וידאו', status: 'pending' },
-    { step: 6, name: 'הפצה', status: 'pending' },
-  ]
-}
+// Mock data for demo
+const mockPipelineSteps: PipelineStep[] = [
+  { id: 'scrape', name: 'Scraping Content', nameHe: 'שליפת תוכן', status: 'completed', duration: '00:03' },
+  { id: 'script', name: 'Generating Script', nameHe: 'יצירת סקריפט', status: 'completed', duration: '00:12' },
+  { id: 'approve', name: 'Awaiting Approval', nameHe: 'ממתין לאישור', status: 'active' },
+  { id: 'audio', name: 'Generating Audio', nameHe: 'יצירת אודיו', status: 'pending' },
+  { id: 'video', name: 'Generating Video', nameHe: 'יצירת וידאו', status: 'pending' },
+  { id: 'distribute', name: 'Distribution', nameHe: 'הפצה', status: 'pending' },
+]
 
-const initialCredits: CreditsStatus = {
-  elevenlabs: { used: 0, remaining: 45000, unit: 'תווים' },
-  heygen: { used: 0, remaining: 12, unit: 'סרטונים' },
-  gemini: { status: 'פעיל', requests_today: 0 }
-}
+const mockLogs: LogEntry[] = [
+  { id: '1', timestamp: '12:40:52', type: 'system', message: 'System initialized' },
+  { id: '2', timestamp: '12:40:53', type: 'info', message: 'Starting daily content pipeline...' },
+  { id: '3', timestamp: '12:40:55', type: 'success', message: 'Successfully scraped Tanya content for today' },
+  { id: '4', timestamp: '12:41:02', type: 'info', message: 'Sending content to Gemini AI...' },
+  { id: '5', timestamp: '12:41:14', type: 'success', message: 'Script generated (127 words, ~60 seconds)' },
+  { id: '6', timestamp: '12:41:15', type: 'info', message: 'Sending script for approval via Telegram...' },
+  { id: '7', timestamp: '12:41:16', type: 'warning', message: 'Awaiting user approval' },
+]
 
-interface LogEntry {
-  timestamp: string
-  level: 'info' | 'success' | 'warning' | 'error'
-  message: string
-}
+const mockScript = `היום נלמד על הניצוץ האלוקי שבתוך כל יהודי.
+
+התניא מלמד אותנו שבכל אחד מאיתנו יש נשמה - חלק אלוק ממעל ממש.
+
+זה לא משנה איפה אתה נמצא בחיים, הניצוץ הזה תמיד דולק.
+
+כמו נר קטן שאף רוח לא יכולה לכבות.
+
+השאלה היא - האם אתה מאפשר לו להאיר?`
+
+const mockMediaItems: MediaItem[] = [
+  {
+    id: '1',
+    title: 'תניא יומי - י״ד כסלו',
+    date: '14/12/2024',
+    duration: '01:02',
+    thumbnail: '',
+    status: 'completed',
+    sentTo: ['telegram', 'whatsapp'],
+    views: 1240,
+  },
+  {
+    id: '2',
+    title: 'תניא יומי - י״ג כסלו',
+    date: '13/12/2024',
+    duration: '00:58',
+    thumbnail: '',
+    status: 'completed',
+    sentTo: ['telegram'],
+    views: 980,
+  },
+  {
+    id: '3',
+    title: 'תניא יומי - י״ב כסלו',
+    date: '12/12/2024',
+    duration: '01:05',
+    thumbnail: '',
+    status: 'failed',
+    sentTo: [],
+  },
+]
 
 export default function Dashboard() {
-  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatusType>(initialPipelineStatus)
-  const [credits, setCredits] = useState<CreditsStatus>(initialCredits)
-  const [logs, setLogs] = useState<LogEntry[]>([
-    { timestamp: new Date().toISOString(), level: 'info', message: 'המערכת אותחלה' },
-    { timestamp: new Date().toISOString(), level: 'info', message: 'ממתין להפעלה...' }
-  ])
-  const [isLoading, setIsLoading] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [systemStatus, setSystemStatus] = useState<'online' | 'processing' | 'error'>('online')
+  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(mockPipelineSteps)
+  const [logs, setLogs] = useState<LogEntry[]>(mockLogs)
+  const [isRunning, setIsRunning] = useState(true)
+  const [credits, setCredits] = useState({
+    elevenlabs: { total: 60000, used: 15000, remaining: 45000, unit: 'characters' },
+    heygen: { total: 100, used: 23, remaining: 77, unit: 'minutes' },
+  })
 
-  const addLog = useCallback((level: LogEntry['level'], message: string) => {
-    setLogs(prev => [...prev.slice(-50), { timestamp: new Date().toISOString(), level, message }])
+  // Add log entry
+  const addLog = useCallback((type: LogType, message: string) => {
+    const newLog: LogEntry = {
+      id: Date.now().toString(),
+      timestamp: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      type,
+      message,
+    }
+    setLogs((prev) => [...prev, newLog])
   }, [])
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [pipelineRes, creditsRes] = await Promise.all([
-        pipelineApi.getStatus(),
-        creditsApi.getStatus()
-      ])
+  // Start pipeline
+  const handleStartPipeline = async () => {
+    if (isRunning) return
+    setIsRunning(true)
+    setSystemStatus('processing')
+    addLog('info', 'Starting pipeline...')
 
-      if (pipelineRes.data) {
-        setPipelineStatus(pipelineRes.data)
-      }
-      if (creditsRes.data) {
-        setCredits(creditsRes.data)
-      }
-      setLastUpdate(new Date())
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 5000)
-    return () => clearInterval(interval)
-  }, [fetchData])
-
-  const handleTriggerPipeline = async () => {
-    setIsLoading(true)
-    addLog('info', 'מתחיל את הפייפליין...')
-
-    try {
-      const result = await pipelineApi.trigger()
-      if (result.data) {
-        addLog('success', 'הפייפליין הופעל בהצלחה')
-        fetchData()
-      } else {
-        addLog('error', `שגיאה: ${result.error}`)
-      }
-    } catch (error) {
-      addLog('error', `שגיאה: ${error}`)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const getLogColor = (level: LogEntry['level']) => {
-    switch (level) {
-      case 'success': return 'text-green-400'
-      case 'warning': return 'text-yellow-400'
-      case 'error': return 'text-red-400'
-      default: return 'text-gray-400'
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    const badges: Record<string, { bg: string, text: string, label: string }> = {
-      idle: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'ממתין' },
-      running: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'פעיל' },
-      paused: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'מושהה' },
-      completed: { bg: 'bg-green-100', text: 'text-green-700', label: 'הושלם' },
-      failed: { bg: 'bg-red-100', text: 'text-red-700', label: 'נכשל' }
-    }
-    const badge = badges[status] || badges.idle
-    return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium ${badge.bg} ${badge.text}`}>
-        {badge.label}
-      </span>
+    // Reset steps
+    setPipelineSteps((steps) =>
+      steps.map((step, index) => ({
+        ...step,
+        status: index === 0 ? 'active' : 'pending',
+        duration: undefined,
+      }))
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">הרב איתן - לוח בקרה</h1>
-              <p className="text-gray-500 text-sm">מערכת אוטומציה לתניא יומי</p>
+  // Handle approval
+  const handleApprove = () => {
+    addLog('success', 'Script approved!')
+    setPipelineSteps((steps) =>
+      steps.map((step) =>
+        step.id === 'approve'
+          ? { ...step, status: 'completed' as StepStatus, duration: '02:15' }
+          : step.id === 'audio'
+          ? { ...step, status: 'active' as StepStatus }
+          : step
+      )
+    )
+  }
+
+  const handleReject = () => {
+    addLog('warning', 'Script rejected, regenerating...')
+  }
+
+  const handleEdit = (newScript: string) => {
+    addLog('info', 'Script edited')
+  }
+
+  const handleVoiceNote = (blob: Blob) => {
+    addLog('info', 'Voice note received, processing with Whisper...')
+  }
+
+  const handleTextFeedback = (feedback: string) => {
+    addLog('info', `Feedback received: ${feedback}`)
+  }
+
+  // Render active view
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6">
+            {/* Hero Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card p-6"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                    <Zap className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500">סרטונים החודש</p>
+                    <p className="text-2xl font-bold text-white">24</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="glass-card p-6"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                    <CreditCard className="w-6 h-6 text-indigo-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500">צפיות כוללות</p>
+                    <p className="text-2xl font-bold text-white">12.4K</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="glass-card p-6"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500">זמן עיבוד ממוצע</p>
+                    <p className="text-2xl font-bold text-white">4:32</p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-            <div className="flex items-center gap-4">
-              {getStatusBadge(pipelineStatus.status)}
-              <span className="text-sm text-gray-500">
-                עדכון: {lastUpdate.toLocaleTimeString('he-IL')}
-              </span>
+
+            {/* Pipeline Visualizer */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <PipelineVisualizer
+                steps={pipelineSteps}
+                isRunning={isRunning}
+                onStart={handleStartPipeline}
+              />
+            </motion.div>
+
+            {/* Credits & Terminal Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <CreditsCard
+                  type="elevenlabs"
+                  total={credits.elevenlabs.total}
+                  used={credits.elevenlabs.used}
+                  unit={credits.elevenlabs.unit}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <CreditsCard
+                  type="heygen"
+                  total={credits.heygen.total}
+                  used={credits.heygen.used}
+                  unit={credits.heygen.unit}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="lg:row-span-2"
+              >
+                <Terminal logs={logs} maxHeight={400} />
+              </motion.div>
             </div>
           </div>
-        </div>
-      </header>
+        )
 
-      <main className="container mx-auto px-6 py-8 space-y-6">
-        {/* Pipeline Status */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">סטטוס הפייפליין</CardTitle>
-                <CardDescription>מעקב אחר תהליך יצירת התוכן</CardDescription>
-              </div>
-              <Button
-                onClick={handleTriggerPipeline}
-                disabled={isLoading || pipelineStatus.status === 'running'}
-                size="lg"
-              >
-                {isLoading ? (
-                  <>
-                    <span className="animate-spin ml-2">⟳</span>
-                    מעבד...
-                  </>
-                ) : (
-                  'הפעל ידנית'
-                )}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <PipelineProgress steps={pipelineStatus.steps} />
-            <PipelineStatus
-              steps={pipelineStatus.steps}
-              currentStep={pipelineStatus.current_step}
+      case 'approval':
+        return (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="h-[calc(100vh-120px)]"
+          >
+            <ApprovalInterface
+              script={mockScript}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              onEdit={handleEdit}
+              onVoiceNote={handleVoiceNote}
+              onTextFeedback={handleTextFeedback}
             />
-          </CardContent>
-        </Card>
+          </motion.div>
+        )
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* ElevenLabs Credits */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="text-2xl">🎙️</span>
-                ElevenLabs
-              </CardTitle>
-              <CardDescription>קרדיטים לאודיו</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <span className="text-3xl font-bold text-blue-600">
-                    {credits.elevenlabs.remaining.toLocaleString()}
-                  </span>
-                  <span className="text-sm text-gray-500">{credits.elevenlabs.unit}</span>
-                </div>
-                <Progress
-                  value={(credits.elevenlabs.remaining / (credits.elevenlabs.remaining + credits.elevenlabs.used)) * 100}
-                  className="h-2"
-                />
-                <p className="text-xs text-gray-500">
-                  נוצלו: {credits.elevenlabs.used.toLocaleString()} {credits.elevenlabs.unit}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      case 'library':
+        return (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <MediaLibrary
+              items={mockMediaItems}
+              onPlay={(id) => addLog('info', `Playing video ${id}`)}
+              onDownload={(id) => addLog('info', `Downloading video ${id}`)}
+              onRegenerate={(id) => addLog('info', `Regenerating video ${id}`)}
+              onDelete={(id) => addLog('warning', `Deleted video ${id}`)}
+            />
+          </motion.div>
+        )
 
-          {/* HeyGen Credits */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="text-2xl">🎬</span>
-                HeyGen
-              </CardTitle>
-              <CardDescription>קרדיטים לוידאו</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <span className="text-3xl font-bold text-purple-600">
-                    {credits.heygen.remaining}
-                  </span>
-                  <span className="text-sm text-gray-500">{credits.heygen.unit}</span>
-                </div>
-                <Progress
-                  value={(credits.heygen.remaining / (credits.heygen.remaining + credits.heygen.used)) * 100}
-                  className="h-2"
-                />
-                <p className="text-xs text-gray-500">
-                  נוצלו: {credits.heygen.used} {credits.heygen.unit}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      case 'settings':
+        return (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="glass-card p-6"
+          >
+            <h2 className="text-xl font-bold text-white mb-6">Settings</h2>
+            <p className="text-zinc-500">Settings page coming soon...</p>
+          </motion.div>
+        )
 
-          {/* Gemini Status */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="text-2xl">✨</span>
-                Gemini AI
-              </CardTitle>
-              <CardDescription>סטטוס יצירת תסריטים</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <span className="text-3xl font-bold text-green-600">
-                    {credits.gemini.status}
-                  </span>
-                </div>
-                <div className="pt-2">
-                  <p className="text-sm text-gray-600">
-                    בקשות היום: <span className="font-medium">{credits.gemini.requests_today}</span>
-                  </p>
-                </div>
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div className="min-h-screen">
+      {/* Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        systemStatus={systemStatus}
+      />
+
+      {/* Main Content */}
+      <main className="mr-[280px] transition-all duration-300 p-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
+            <div>
+              <h1 className="text-3xl font-bold text-white">
+                {activeTab === 'dashboard' && 'Mission Control'}
+                {activeTab === 'approval' && 'Script Approval'}
+                {activeTab === 'library' && 'Media Library'}
+                {activeTab === 'settings' && 'Settings'}
+              </h1>
+              <p className="text-zinc-500 mt-1">
+                {activeTab === 'dashboard' && 'Monitor and control your content pipeline'}
+                {activeTab === 'approval' && 'Review and approve generated scripts'}
+                {activeTab === 'library' && 'Browse your generated content'}
+                {activeTab === 'settings' && 'Configure your automation settings'}
+              </p>
+            </div>
+
+            {/* Credit Badge */}
+            <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/50 border border-white/5">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-sm text-zinc-400">
+                  {credits.elevenlabs.remaining.toLocaleString()} chars
+                </span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="w-px h-4 bg-white/10" />
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                <span className="text-sm text-zinc-400">{credits.heygen.remaining} min</span>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Logs */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">לוגים</CardTitle>
-                <CardDescription>פעילות אחרונה במערכת</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setLogs([])}>
-                נקה לוגים
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-900 rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm">
-              {logs.length === 0 ? (
-                <p className="text-gray-500">אין לוגים להצגה</p>
-              ) : (
-                logs.map((log, index) => (
-                  <div key={index} className={getLogColor(log.level)}>
-                    <span className="text-gray-600">
-                      [{new Date(log.timestamp).toLocaleTimeString('he-IL')}]
-                    </span>{' '}
-                    {log.message}
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">פעולות מהירות</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <span className="text-2xl">📝</span>
-                <span>תסריט חדש</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <span className="text-2xl">🔄</span>
-                <span>רענן תוכן</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <span className="text-2xl">📤</span>
-                <span>הפץ ידנית</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <span className="text-2xl">⚙️</span>
-                <span>הגדרות</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Page Content */}
+        <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t bg-white mt-8">
-        <div className="container mx-auto px-6 py-4">
-          <p className="text-center text-sm text-gray-500">
-            Rabbi Eitan Automation System v1.0.0
-          </p>
-        </div>
-      </footer>
     </div>
   )
 }
