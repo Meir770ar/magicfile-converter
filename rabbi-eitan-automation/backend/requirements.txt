@@ -31,7 +31,7 @@ flower==2.0.1
 beautifulsoup4==4.12.3
 lxml==5.1.0
 requests==2.31.0
-httpx==0.26.0
+httpx==0.25.2
 
 # RSS Fallback
 feedparser==6.0.10
@@ -105,7 +105,6 @@ sentry-sdk[fastapi]==1.39.1
 pytest==7.4.4
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
-httpx==0.26.0
 factory-boy==3.3.0
 
 # --------------------------
