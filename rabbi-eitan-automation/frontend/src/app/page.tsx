@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 
-// Types
 type StationStatus = 'waiting' | 'active' | 'completed' | 'error'
 
 interface Station {
@@ -10,242 +9,305 @@ interface Station {
   hebrewName: string
   icon: string
   status: StationStatus
-  description?: string
-  time?: string
 }
 
 export default function HomePage() {
   const [stations, setStations] = useState<Station[]>([
-    { id: 'scrape', hebrewName: 'תוכן', icon: '📖', status: 'completed', description: 'תניא יומי - י״ז כסלו', time: '06:00' },
-    { id: 'script', hebrewName: 'סקריפט', icon: '✍️', status: 'completed', description: '85 מילים', time: '06:05' },
-    { id: 'approve', hebrewName: 'אישור', icon: '✅', status: 'active', description: 'ממתין לאישור', time: '' },
-    { id: 'audio', hebrewName: 'הקלטה', icon: '🎙️', status: 'waiting', description: '', time: '' },
-    { id: 'video', hebrewName: 'וידאו', icon: '🎬', status: 'waiting', description: '', time: '' },
-    { id: 'send', hebrewName: 'שליחה', icon: '📤', status: 'waiting', description: '', time: '' },
+    { id: 'scrape', hebrewName: 'תוכן', icon: '📖', status: 'completed' },
+    { id: 'script', hebrewName: 'סקריפט', icon: '✍️', status: 'completed' },
+    { id: 'approve', hebrewName: 'אישור', icon: '✅', status: 'active' },
+    { id: 'audio', hebrewName: 'הקלטה', icon: '🎙️', status: 'waiting' },
+    { id: 'video', hebrewName: 'וידאו', icon: '🎬', status: 'waiting' },
+    { id: 'send', hebrewName: 'שליחה', icon: '📤', status: 'waiting' },
   ])
 
-  const [todayDate, setTodayDate] = useState('')
-  const [scriptText, setScriptText] = useState(`שלום וברכה לכל בית ישראל!
+  const [scriptText] = useState(`שלום וברכה לכל בית ישראל!
 
 היום נלמד יחד קטע מיוחד מספר התניא על הניצוץ האלוקי שבתוך כל יהודי.
 
-התניא מלמד אותנו שבכל אחד מאיתנו יש נשמה - חלק אלוק ממעל ממש. זה לא משנה איפה אתה נמצא בחיים, הניצוץ הזה תמיד דולק.
-
-כמו נר קטן שאף רוח לא יכולה לכבות. השאלה היא - האם אתה מאפשר לו להאיר?
+התניא מלמד אותנו שבכל אחד מאיתנו יש נשמה - חלק אלוק ממעל ממש.
 
 יום טוב ומבורך!`)
-
-  useEffect(() => {
-    const today = new Date()
-    setTodayDate(today.toLocaleDateString('he-IL', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }))
-  }, [])
-
-  const getStatusColor = (status: StationStatus) => {
-    switch (status) {
-      case 'completed': return '#10b981'
-      case 'active': return '#6366f1'
-      case 'error': return '#f43f5e'
-      default: return '#3f3f46'
-    }
-  }
 
   const completedCount = stations.filter(s => s.status === 'completed').length
   const activeStation = stations.find(s => s.status === 'active')
 
-  // Handle approval actions
   const handleApprove = () => {
     setStations(prev => prev.map(s => {
-      if (s.id === 'approve') return { ...s, status: 'completed' as StationStatus, time: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) }
+      if (s.id === 'approve') return { ...s, status: 'completed' as StationStatus }
       if (s.id === 'audio') return { ...s, status: 'active' as StationStatus }
       return s
     }))
   }
 
-  const handleReject = () => {
-    setStations(prev => prev.map(s => {
-      if (s.id === 'script') return { ...s, status: 'active' as StationStatus }
-      if (s.id === 'approve') return { ...s, status: 'waiting' as StationStatus }
-      return s
-    }))
+  const getStatusStyle = (status: StationStatus) => {
+    if (status === 'completed') return { bg: '#10b981', border: '#10b981' }
+    if (status === 'active') return { bg: '#ca8a04', border: '#ca8a04' }
+    return { bg: 'transparent', border: '#3f3f46' }
   }
+
+  const features = [
+    { icon: '📖', title: 'תוכן אוטומטי', desc: 'שליפת התניא היומי מ-Chabad.org' },
+    { icon: '🤖', title: 'בינה מלאכותית', desc: 'יצירת סקריפט עם Gemini AI' },
+    { icon: '🎙️', title: 'קול מושלם', desc: 'הקלטה באמצעות ElevenLabs' },
+    { icon: '📤', title: 'הפצה רחבה', desc: 'שליחה לטלגרם ו-WhatsApp' },
+  ]
 
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(180deg, #09090b 0%, #18181b 100%)',
+      background: '#0a0a0a',
       color: 'white',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       direction: 'rtl',
+      overflow: 'hidden',
     }}>
+
       {/* Header */}
       <header style={{
-        padding: '20px 32px',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        padding: '16px 40px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        position: 'relative',
+        zIndex: 10,
       }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            🕎 הרב איתן - תניא יומי
-          </h1>
-          <p style={{ color: '#71717a', margin: '4px 0 0', fontSize: 13 }}>{todayDate}</p>
-        </div>
-        <button style={{
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          border: 'none',
-          padding: '10px 20px',
+        <div style={{
+          padding: '8px 16px',
+          background: 'rgba(255,255,255,0.05)',
           borderRadius: 8,
-          color: 'white',
-          fontWeight: 600,
-          cursor: 'pointer',
+          border: '1px solid rgba(255,255,255,0.1)',
           fontSize: 14,
+          fontWeight: 500,
         }}>
-          ▶️ התחל מסע חדש
-        </button>
+          הרב איתן ▾
+        </div>
+        <div style={{
+          padding: '8px 20px',
+          background: 'rgba(255,255,255,0.08)',
+          borderRadius: 20,
+          fontSize: 13,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}>
+          ✨ מערכת דור הבא
+        </div>
       </header>
 
-      {/* Main Content */}
-      <main style={{ padding: '40px 32px', maxWidth: 900, margin: '0 auto' }}>
+      {/* Hero Section */}
+      <section style={{
+        position: 'relative',
+        textAlign: 'center',
+        padding: '60px 40px 80px',
+      }}>
+        {/* Abstract Background Waves */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(ellipse 80% 50% at 50% 0%, rgba(120, 119, 198, 0.15), transparent),
+            radial-gradient(ellipse 60% 30% at 70% 50%, rgba(255, 180, 100, 0.08), transparent)
+          `,
+          zIndex: 0,
+        }} />
 
-        {/* Journey Title */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#a1a1aa', margin: 0 }}>
-            מסע יצירת הסרטון
-          </h2>
-          <p style={{ color: '#52525b', fontSize: 14, marginTop: 4 }}>
-            {completedCount} מתוך {stations.length} תחנות הושלמו
+        {/* Wave Lines */}
+        <div style={{
+          position: 'absolute',
+          top: '20%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '120%',
+          height: '300px',
+          opacity: 0.15,
+          background: `repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 40px,
+            rgba(255,255,255,0.3) 40px,
+            rgba(255,255,255,0.3) 41px
+          )`,
+          maskImage: 'radial-gradient(ellipse 50% 100% at 50% 50%, black, transparent)',
+          WebkitMaskImage: 'radial-gradient(ellipse 50% 100% at 50% 50%, black, transparent)',
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Main Title */}
+          <h1 style={{
+            fontSize: 'clamp(36px, 5vw, 56px)',
+            fontWeight: 300,
+            margin: 0,
+            lineHeight: 1.2,
+            letterSpacing: '-0.02em',
+          }}>
+            תניא יומי
+            <br />
+            <span style={{ fontWeight: 600 }}>באוטומציה מלאה</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p style={{
+            fontSize: 18,
+            color: 'rgba(255,255,255,0.6)',
+            maxWidth: 500,
+            margin: '24px auto 40px',
+            lineHeight: 1.6,
+          }}>
+            מערכת חכמה שיוצרת סרטוני תניא יומיים - מתוכן ועד הפצה.
+            <br />
+            הכל אוטומטי, הכל מושלם.
           </p>
+
+          {/* CTA Buttons */}
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <button style={{
+              padding: '14px 32px',
+              background: 'white',
+              color: '#0a0a0a',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              התחל מסע
+            </button>
+            <button style={{
+              padding: '14px 32px',
+              background: 'transparent',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 8,
+              fontSize: 15,
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}>
+              למד עוד
+            </button>
+          </div>
         </div>
 
-        {/* Journey Track */}
-        <div style={{ position: 'relative', padding: '0 20px' }}>
+        {/* Navigation Arrows */}
+        <button style={{
+          position: 'absolute',
+          left: 40,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 40,
+          height: 40,
+          background: 'transparent',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 8,
+          color: 'rgba(255,255,255,0.4)',
+          cursor: 'pointer',
+          fontSize: 18,
+        }}>‹</button>
+        <button style={{
+          position: 'absolute',
+          right: 40,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 40,
+          height: 40,
+          background: 'transparent',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 8,
+          color: 'rgba(255,255,255,0.4)',
+          cursor: 'pointer',
+          fontSize: 18,
+        }}>›</button>
+      </section>
 
-          {/* Background Track Line */}
-          <div style={{
-            position: 'absolute',
-            top: 35,
-            right: 60,
-            left: 60,
-            height: 4,
-            background: '#27272a',
-            borderRadius: 2,
-          }} />
-
-          {/* Progress Track Line */}
-          <div style={{
-            position: 'absolute',
-            top: 35,
-            right: 60,
-            width: `calc(${(completedCount / (stations.length - 1)) * 100}% - 40px)`,
-            maxWidth: 'calc(100% - 120px)',
-            height: 4,
-            background: 'linear-gradient(90deg, #10b981, #6366f1)',
-            borderRadius: 2,
-            transition: 'width 0.5s ease',
-          }} />
-
-          {/* Stations */}
+      {/* Journey Section */}
+      {activeStation && (
+        <section style={{
+          padding: '0 40px 60px',
+          maxWidth: 800,
+          margin: '0 auto',
+        }}>
+          {/* Journey Progress */}
           <div style={{
             display: 'flex',
-            justifyContent: 'space-between',
-            position: 'relative',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            marginBottom: 32,
           }}>
-            {stations.map((station) => (
-              <div
-                key={station.id}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  width: 80,
-                }}
-              >
-                {/* Station Circle */}
+            {stations.map((station, i) => (
+              <div key={station.id} style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{
-                  width: 70,
-                  height: 70,
+                  width: 36,
+                  height: 36,
                   borderRadius: '50%',
-                  background: station.status === 'waiting' ? '#1f1f23' : `${getStatusColor(station.status)}20`,
-                  border: `3px solid ${getStatusColor(station.status)}`,
+                  background: getStatusStyle(station.status).bg === 'transparent'
+                    ? 'rgba(255,255,255,0.05)'
+                    : `${getStatusStyle(station.status).bg}20`,
+                  border: `2px solid ${getStatusStyle(station.status).border}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 28,
-                  marginBottom: 10,
-                  boxShadow: station.status === 'active' ? `0 0 20px ${getStatusColor(station.status)}50` : 'none',
-                  transition: 'all 0.3s ease',
+                  fontSize: 16,
+                  boxShadow: station.status === 'active' ? '0 0 15px rgba(202, 138, 4, 0.4)' : 'none',
                 }}>
                   {station.status === 'completed' ? '✓' : station.icon}
                 </div>
-
-                {/* Station Name */}
-                <div style={{ fontWeight: 600, fontSize: 14, color: station.status === 'waiting' ? '#52525b' : 'white' }}>
-                  {station.hebrewName}
-                </div>
-
-                {/* Station Description */}
-                {station.description && (
-                  <div style={{ fontSize: 11, color: '#71717a', marginTop: 2, textAlign: 'center' }}>
-                    {station.description}
-                  </div>
-                )}
-
-                {/* Time */}
-                {station.time && (
-                  <div style={{ fontSize: 10, color: '#52525b', marginTop: 2 }}>{station.time}</div>
+                {i < stations.length - 1 && (
+                  <div style={{
+                    width: 40,
+                    height: 2,
+                    background: stations[i + 1].status !== 'waiting'
+                      ? 'linear-gradient(90deg, #10b981, #ca8a04)'
+                      : 'rgba(255,255,255,0.1)',
+                    marginRight: 4,
+                    marginLeft: 4,
+                  }} />
                 )}
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Active Station Panel */}
-        {activeStation && (
+          {/* Current Step Card */}
           <div style={{
-            marginTop: 50,
-            padding: 28,
-            background: 'rgba(99, 102, 241, 0.08)',
-            border: '1px solid rgba(99, 102, 241, 0.2)',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: 16,
+            padding: 28,
           }}>
-            {/* Panel Header */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: 10,
               marginBottom: 20,
             }}>
-              <span style={{
-                width: 10,
-                height: 10,
-                background: '#6366f1',
+              <div style={{
+                width: 8,
+                height: 8,
+                background: '#ca8a04',
                 borderRadius: '50%',
-                boxShadow: '0 0 10px #6366f1',
+                boxShadow: '0 0 8px #ca8a04',
               }} />
-              <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>
-                תחנה נוכחית: {activeStation.hebrewName}
-              </h3>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>תחנה נוכחית</span>
+              <span style={{ fontWeight: 600, fontSize: 16 }}>{activeStation.hebrewName}</span>
             </div>
 
-            {/* Script Content (for approval station) */}
             {activeStation.id === 'approve' && (
               <>
                 <div style={{
-                  background: 'rgba(0,0,0,0.4)',
+                  background: 'rgba(0,0,0,0.3)',
                   borderRadius: 12,
                   padding: 20,
                   marginBottom: 20,
+                  maxHeight: 200,
+                  overflow: 'auto',
                 }}>
                   <p style={{
-                    fontSize: 16,
-                    lineHeight: 1.9,
-                    color: '#e4e4e7',
+                    fontSize: 15,
+                    lineHeight: 1.8,
+                    color: 'rgba(255,255,255,0.8)',
                     margin: 0,
                     whiteSpace: 'pre-wrap',
                   }}>
@@ -253,145 +315,118 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* Word/Time info */}
-                <div style={{
-                  display: 'flex',
-                  gap: 16,
-                  marginBottom: 20,
-                  fontSize: 13,
-                  color: '#71717a',
-                }}>
-                  <span>📝 {scriptText.split(/\s+/).length} מילים</span>
-                  <span>⏱️ ~{Math.ceil(scriptText.length / 15)} שניות</span>
-                </div>
-
-                {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     onClick={handleApprove}
                     style={{
                       flex: 1,
-                      padding: '14px 20px',
-                      borderRadius: 10,
+                      padding: '12px 20px',
+                      background: 'white',
+                      color: '#0a0a0a',
                       border: 'none',
-                      background: '#10b981',
-                      color: 'white',
+                      borderRadius: 8,
                       fontWeight: 600,
-                      fontSize: 15,
+                      fontSize: 14,
                       cursor: 'pointer',
                     }}
                   >
-                    ✓ אשר והמשך
+                    ✓ אישור
                   </button>
                   <button style={{
-                    padding: '14px 20px',
-                    borderRadius: 10,
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    padding: '12px 20px',
                     background: 'transparent',
                     color: 'white',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 8,
                     fontWeight: 500,
-                    fontSize: 15,
+                    fontSize: 14,
                     cursor: 'pointer',
                   }}>
-                    ✏️ ערוך
+                    עריכה
                   </button>
-                  <button
-                    onClick={handleReject}
-                    style={{
-                      padding: '14px 20px',
-                      borderRadius: 10,
-                      border: '1px solid rgba(244, 63, 94, 0.4)',
-                      background: 'rgba(244, 63, 94, 0.1)',
-                      color: '#f87171',
-                      fontWeight: 500,
-                      fontSize: 15,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ✗ דחה
+                  <button style={{
+                    padding: '12px 20px',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    borderRadius: 8,
+                    fontWeight: 500,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                  }}>
+                    דחייה
                   </button>
                 </div>
               </>
             )}
 
-            {/* Processing indicator for other stations */}
             {activeStation.id !== 'approve' && (
-              <div style={{ textAlign: 'center', padding: 20 }}>
+              <div style={{ textAlign: 'center', padding: 30 }}>
                 <div style={{
-                  width: 40,
-                  height: 40,
-                  border: '3px solid #6366f1',
+                  width: 32,
+                  height: 32,
+                  border: '2px solid #ca8a04',
                   borderTopColor: 'transparent',
                   borderRadius: '50%',
-                  margin: '0 auto 16px',
+                  margin: '0 auto 12px',
                   animation: 'spin 1s linear infinite',
                 }} />
-                <p style={{ color: '#a1a1aa', margin: 0 }}>מעבד...</p>
+                <p style={{ color: 'rgba(255,255,255,0.5)', margin: 0, fontSize: 14 }}>מעבד...</p>
               </div>
             )}
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Completed Message */}
-        {completedCount === stations.length && (
-          <div style={{
-            marginTop: 50,
-            padding: 32,
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            borderRadius: 16,
-            textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-            <h3 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 8px' }}>המסע הושלם!</h3>
-            <p style={{ color: '#71717a', margin: 0 }}>הסרטון נוצר ונשלח בהצלחה</p>
+      {/* Feature Cards */}
+      <section style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: 1,
+        background: 'rgba(255,255,255,0.05)',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+      }}>
+        {features.map((feature, i) => (
+          <div
+            key={i}
+            style={{
+              padding: '32px 24px',
+              background: '#0a0a0a',
+              borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+            }}
+          >
+            <div style={{ fontSize: 28, marginBottom: 16 }}>{feature.icon}</div>
+            <h3 style={{
+              fontSize: 16,
+              fontWeight: 600,
+              margin: '0 0 8px',
+              color: '#ca8a04',
+            }}>
+              {feature.title}
+            </h3>
+            <p style={{
+              fontSize: 14,
+              color: 'rgba(255,255,255,0.5)',
+              margin: 0,
+              lineHeight: 1.5,
+            }}>
+              {feature.desc}
+            </p>
           </div>
-        )}
+        ))}
+      </section>
 
-        {/* Recent Videos */}
-        <div style={{ marginTop: 50 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: '#a1a1aa' }}>
-            📚 סרטונים אחרונים
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                }}
-              >
-                <div style={{
-                  aspectRatio: '16/9',
-                  background: '#18181b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 32,
-                }}>
-                  🎬
-                </div>
-                <div style={{ padding: 12 }}>
-                  <div style={{ fontWeight: 500, fontSize: 13 }}>תניא - י״{i + 3} כסלו</div>
-                  <div style={{ fontSize: 11, color: '#52525b', marginTop: 4 }}>
-                    1:23 • Telegram + WhatsApp
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-
-      {/* Animations */}
       <style jsx global>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        * {
+          box-sizing: border-box;
+        }
+        body {
+          margin: 0;
+          padding: 0;
         }
       `}</style>
     </div>
