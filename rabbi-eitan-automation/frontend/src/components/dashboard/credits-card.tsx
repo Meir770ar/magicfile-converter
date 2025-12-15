@@ -1,8 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { Mic, Video, TrendingDown, TrendingUp } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface CreditsCardProps {
   type: 'elevenlabs' | 'heygen'
@@ -16,15 +14,13 @@ const config = {
     icon: Mic,
     title: 'ElevenLabs',
     subtitle: 'קרדיטים לאודיו',
-    gradient: 'from-indigo-500 to-purple-600',
-    glow: 'shadow-glow-sm',
+    gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
   },
   heygen: {
     icon: Video,
     title: 'HeyGen',
     subtitle: 'קרדיטים לוידאו',
-    gradient: 'from-emerald-500 to-teal-600',
-    glow: 'shadow-glow-emerald',
+    gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
   },
 }
 
@@ -34,99 +30,108 @@ export function CreditsCard({ type, total, used, unit }: CreditsCardProps) {
   const isLow = percentage < 25
   const isMedium = percentage >= 25 && percentage < 50
 
-  const { icon: Icon, title, subtitle, gradient, glow } = config[type]
+  const { icon: Icon, title, subtitle, gradient } = config[type]
+
+  const progressColor = isLow ? '#f87171' : isMedium ? '#fbbf24' : type === 'elevenlabs' ? '#818cf8' : '#34d399'
 
   return (
-    <div className="credit-card group">
+    <div style={{
+      background: 'rgba(24, 24, 27, 0.8)',
+      backdropFilter: 'blur(12px)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: 12,
+      padding: 24,
+    }}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              'w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br',
-              gradient,
-              glow
-            )}
-          >
-            <Icon className="w-6 h-6 text-white" />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 48,
+            height: 48,
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: gradient,
+            boxShadow: '0 0 15px rgba(99, 102, 241, 0.3)',
+          }}>
+            <Icon style={{ width: 24, height: 24, color: 'white' }} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
-            <p className="text-sm text-zinc-500">{subtitle}</p>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: 'white', margin: 0 }}>{title}</h3>
+            <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>{subtitle}</p>
           </div>
         </div>
 
         {/* Trend Indicator */}
-        <div
-          className={cn(
-            'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium',
-            isLow && 'bg-rose-500/10 text-rose-400',
-            isMedium && 'bg-amber-500/10 text-amber-400',
-            !isLow && !isMedium && 'bg-emerald-500/10 text-emerald-400'
-          )}
-        >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          padding: '4px 8px',
+          borderRadius: 9999,
+          fontSize: 12,
+          fontWeight: 500,
+          background: isLow ? 'rgba(248, 113, 113, 0.1)' : isMedium ? 'rgba(251, 191, 36, 0.1)' : 'rgba(52, 211, 153, 0.1)',
+          color: isLow ? '#f87171' : isMedium ? '#fbbf24' : '#34d399',
+        }}>
           {isLow ? (
-            <TrendingDown className="w-3 h-3" />
+            <TrendingDown style={{ width: 12, height: 12 }} />
           ) : (
-            <TrendingUp className="w-3 h-3" />
+            <TrendingUp style={{ width: 12, height: 12 }} />
           )}
           {percentage}%
         </div>
       </div>
 
       {/* Main Value */}
-      <div className="text-center mb-6">
-        <motion.span
-          key={remaining}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-4xl font-bold text-white"
-        >
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <span style={{ fontSize: 36, fontWeight: 700, color: 'white' }}>
           {remaining.toLocaleString()}
-        </motion.span>
-        <p className="text-sm text-zinc-500 mt-1">{unit}</p>
+        </span>
+        <p style={{ fontSize: 14, color: '#71717a', marginTop: 4, marginBottom: 0 }}>{unit}</p>
       </div>
 
       {/* Progress Bar */}
-      <div className="mb-4">
-        <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percentage}%` }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-            className={cn(
-              'h-full rounded-full',
-              isLow && 'bg-gradient-to-r from-rose-500 to-rose-400',
-              isMedium && 'bg-gradient-to-r from-amber-500 to-amber-400',
-              !isLow && !isMedium && `bg-gradient-to-r ${gradient}`
-            )}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ height: 8, background: '#27272a', borderRadius: 9999, overflow: 'hidden' }}>
+          <div
+            style={{
+              width: `${percentage}%`,
+              height: '100%',
+              borderRadius: 9999,
+              background: progressColor,
+              transition: 'width 0.5s ease',
+            }}
           />
         </div>
       </div>
 
       {/* Stats */}
-      <div className="flex items-center justify-between text-sm">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 14 }}>
         <div>
-          <span className="text-zinc-500">נצלו: </span>
-          <span className="text-zinc-300">{used.toLocaleString()}</span>
+          <span style={{ color: '#71717a' }}>נצלו: </span>
+          <span style={{ color: '#a1a1aa' }}>{used.toLocaleString()}</span>
         </div>
         <div>
-          <span className="text-zinc-500">סה״כ: </span>
-          <span className="text-zinc-300">{total.toLocaleString()}</span>
+          <span style={{ color: '#71717a' }}>סה״כ: </span>
+          <span style={{ color: '#a1a1aa' }}>{total.toLocaleString()}</span>
         </div>
       </div>
 
       {/* Warning Message */}
       {isLow && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20"
-        >
-          <p className="text-sm text-rose-400 text-center">
+        <div style={{
+          marginTop: 16,
+          padding: 12,
+          borderRadius: 8,
+          background: 'rgba(248, 113, 113, 0.1)',
+          border: '1px solid rgba(248, 113, 113, 0.2)',
+        }}>
+          <p style={{ fontSize: 14, color: '#f87171', textAlign: 'center', margin: 0 }}>
             ⚠️ הקרדיטים עומדים להיגמר
           </p>
-        </motion.div>
+        </div>
       )}
     </div>
   )

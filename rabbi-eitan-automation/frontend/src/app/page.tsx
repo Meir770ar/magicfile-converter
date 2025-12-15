@@ -147,109 +147,94 @@ export default function Dashboard() {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div className="space-y-6">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* Hero Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card p-6"
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              <div
+                style={{
+                  background: 'rgba(24, 24, 27, 0.8)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 12,
+                  padding: 24,
+                }}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                    <Zap className="w-6 h-6 text-emerald-400" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Zap style={{ width: 24, height: 24, color: '#34d399' }} />
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-500">סרטונים החודש</p>
-                    <p className="text-2xl font-bold text-white">24</p>
+                    <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>סרטונים החודש</p>
+                    <p style={{ fontSize: 28, fontWeight: 700, color: 'white', margin: 0 }}>24</p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="glass-card p-6"
+              <div
+                style={{
+                  background: 'rgba(24, 24, 27, 0.8)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 12,
+                  padding: 24,
+                }}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-                    <CreditCard className="w-6 h-6 text-indigo-400" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CreditCard style={{ width: 24, height: 24, color: '#818cf8' }} />
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-500">צפיות כוללות</p>
-                    <p className="text-2xl font-bold text-white">12.4K</p>
+                    <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>צפיות כוללות</p>
+                    <p style={{ fontSize: 28, fontWeight: 700, color: 'white', margin: 0 }}>12.4K</p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="glass-card p-6"
+              <div
+                style={{
+                  background: 'rgba(24, 24, 27, 0.8)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 12,
+                  padding: 24,
+                }}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-purple-400" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(139, 92, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Clock style={{ width: 24, height: 24, color: '#a78bfa' }} />
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-500">זמן עיבוד ממוצע</p>
-                    <p className="text-2xl font-bold text-white">4:32</p>
+                    <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>זמן עיבוד ממוצע</p>
+                    <p style={{ fontSize: 28, fontWeight: 700, color: 'white', margin: 0 }}>4:32</p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
             {/* Pipeline Visualizer */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <PipelineVisualizer
-                steps={pipelineSteps}
-                isRunning={isRunning}
-                onStart={handleStartPipeline}
-              />
-            </motion.div>
+            <PipelineVisualizer
+              steps={pipelineSteps}
+              isRunning={isRunning}
+              onStart={handleStartPipeline}
+            />
 
             {/* Credits & Terminal Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <CreditsCard
-                  type="elevenlabs"
-                  total={credits.elevenlabs.total}
-                  used={credits.elevenlabs.used}
-                  unit={credits.elevenlabs.unit}
-                />
-              </motion.div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
+              <CreditsCard
+                type="elevenlabs"
+                total={credits.elevenlabs.total}
+                used={credits.elevenlabs.used}
+                unit={credits.elevenlabs.unit}
+              />
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <CreditsCard
-                  type="heygen"
-                  total={credits.heygen.total}
-                  used={credits.heygen.used}
-                  unit={credits.heygen.unit}
-                />
-              </motion.div>
+              <CreditsCard
+                type="heygen"
+                total={credits.heygen.total}
+                used={credits.heygen.used}
+                unit={credits.heygen.unit}
+              />
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="lg:row-span-2"
-              >
-                <Terminal logs={logs} maxHeight={400} />
-              </motion.div>
+              <Terminal logs={logs} maxHeight={350} />
             </div>
           </div>
         )
@@ -314,20 +299,16 @@ export default function Dashboard() {
       {/* Main Content */}
       <main style={{ marginRight: 280, padding: 32, transition: 'margin 0.3s ease' }}>
         {/* Page Header */}
-        <div className="mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
-          >
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 style={{ fontSize: 32, fontWeight: 700, color: 'white', margin: 0 }}>
                 {activeTab === 'dashboard' && 'Mission Control'}
                 {activeTab === 'approval' && 'Script Approval'}
                 {activeTab === 'library' && 'Media Library'}
                 {activeTab === 'settings' && 'Settings'}
               </h1>
-              <p className="text-zinc-500 mt-1">
+              <p style={{ fontSize: 14, color: '#71717a', marginTop: 4, marginBottom: 0 }}>
                 {activeTab === 'dashboard' && 'Monitor and control your content pipeline'}
                 {activeTab === 'approval' && 'Review and approve generated scripts'}
                 {activeTab === 'library' && 'Browse your generated content'}
@@ -336,20 +317,28 @@ export default function Dashboard() {
             </div>
 
             {/* Credit Badge */}
-            <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/50 border border-white/5">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-sm text-zinc-400">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '8px 16px',
+              borderRadius: 12,
+              background: 'rgba(24, 24, 27, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+                <span style={{ fontSize: 14, color: '#a1a1aa' }}>
                   {credits.elevenlabs.remaining.toLocaleString()} chars
                 </span>
               </div>
-              <div className="w-px h-4 bg-white/10" />
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-purple-500" />
-                <span className="text-sm text-zinc-400">{credits.heygen.remaining} min</span>
+              <div style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#8b5cf6' }} />
+                <span style={{ fontSize: 14, color: '#a1a1aa' }}>{credits.heygen.remaining} min</span>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Page Content */}

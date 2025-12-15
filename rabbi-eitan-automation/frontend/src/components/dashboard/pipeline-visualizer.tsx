@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   Globe,
   FileText,
@@ -13,7 +13,6 @@ import {
   Clock,
   RotateCcw,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 export type StepStatus = 'pending' | 'active' | 'completed' | 'error'
 
@@ -27,12 +26,12 @@ export interface PipelineStep {
 }
 
 const stepIcons: Record<string, React.ReactNode> = {
-  scrape: <Globe className="w-5 h-5" />,
-  script: <FileText className="w-5 h-5" />,
-  approve: <CheckCircle2 className="w-5 h-5" />,
-  audio: <Mic className="w-5 h-5" />,
-  video: <Video className="w-5 h-5" />,
-  distribute: <Send className="w-5 h-5" />,
+  scrape: <Globe style={{ width: 20, height: 20 }} />,
+  script: <FileText style={{ width: 20, height: 20 }} />,
+  approve: <CheckCircle2 style={{ width: 20, height: 20 }} />,
+  audio: <Mic style={{ width: 20, height: 20 }} />,
+  video: <Video style={{ width: 20, height: 20 }} />,
+  distribute: <Send style={{ width: 20, height: 20 }} />,
 }
 
 interface PipelineVisualizerProps {
@@ -40,6 +39,16 @@ interface PipelineVisualizerProps {
   isRunning: boolean
   onStart: () => void
   onRetry?: (stepId: string) => void
+}
+
+const getStatusColor = (status: StepStatus) => {
+  switch (status) {
+    case 'pending': return { bg: '#27272a', text: '#71717a' }
+    case 'active': return { bg: 'rgba(99, 102, 241, 0.2)', text: '#818cf8' }
+    case 'completed': return { bg: 'rgba(16, 185, 129, 0.2)', text: '#34d399' }
+    case 'error': return { bg: 'rgba(244, 63, 94, 0.2)', text: '#f87171' }
+    default: return { bg: '#27272a', text: '#71717a' }
+  }
 }
 
 export function PipelineVisualizer({
@@ -53,15 +62,21 @@ export function PipelineVisualizer({
   const currentStep = steps.find((s) => s.status === 'active')
 
   return (
-    <div className="glass-card p-6">
+    <div style={{
+      background: 'rgba(24, 24, 27, 0.8)',
+      backdropFilter: 'blur(12px)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: 12,
+      padding: 24,
+    }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <span className="text-2xl">🚀</span>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 24 }}>🚀</span>
             Pipeline Status
           </h2>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p style={{ fontSize: 14, color: '#a1a1aa', marginTop: 4, marginBottom: 0 }}>
             {isRunning
               ? `שלב ${completedSteps + 1} מתוך ${steps.length} • ${currentStep?.nameHe || 'מעבד...'}`
               : 'מוכן ליצירת תוכן'}
@@ -70,14 +85,24 @@ export function PipelineVisualizer({
         <button
           onClick={onStart}
           disabled={isRunning}
-          className={cn(
-            'glow-button flex items-center gap-2',
-            isRunning && 'opacity-50 cursor-not-allowed'
-          )}
+          style={{
+            padding: '12px 24px',
+            borderRadius: 8,
+            fontWeight: 600,
+            color: 'white',
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
+            border: 'none',
+            cursor: isRunning ? 'not-allowed' : 'pointer',
+            opacity: isRunning ? 0.5 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
         >
           {isRunning ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
               מעבד...
             </>
           ) : (
@@ -90,118 +115,139 @@ export function PipelineVisualizer({
       </div>
 
       {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between text-sm mb-2">
-          <span className="text-zinc-400">התקדמות</span>
-          <span className="text-white font-medium">{Math.round(progress)}%</span>
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontSize: 14, color: '#a1a1aa' }}>התקדמות</span>
+          <span style={{ fontSize: 14, color: 'white', fontWeight: 500 }}>{Math.round(progress)}%</span>
         </div>
-        <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+        <div style={{ height: 8, background: '#27272a', borderRadius: 9999, overflow: 'hidden' }}>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className={cn(
-              'h-full rounded-full',
-              isRunning
-                ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 bg-[length:200%_100%] animate-shimmer'
-                : 'bg-gradient-to-r from-indigo-500 to-purple-500'
-            )}
+            style={{
+              height: '100%',
+              borderRadius: 9999,
+              background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+            }}
           />
         </div>
       </div>
 
-      {/* Pipeline Steps - Subway Map Style */}
-      <div className="relative">
+      {/* Pipeline Steps */}
+      <div style={{ position: 'relative' }}>
         {/* Connection Line */}
-        <div className="absolute top-0 bottom-0 right-[27px] w-0.5 bg-zinc-800" />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          right: 27,
+          width: 2,
+          background: '#27272a',
+        }} />
 
-        <div className="space-y-2">
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={cn(
-                'pipeline-step relative',
-                step.status === 'active' && 'active',
-                step.status === 'completed' && 'completed'
-              )}
-            >
-              {/* Step Indicator */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {steps.map((step, index) => {
+            const colors = getStatusColor(step.status)
+            return (
               <div
-                className={cn(
-                  'relative z-10 w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300',
-                  step.status === 'pending' && 'bg-zinc-800 text-zinc-500',
-                  step.status === 'active' && 'bg-indigo-500/20 text-indigo-400 shadow-glow-sm animate-pulse-glow',
-                  step.status === 'completed' && 'bg-emerald-500/20 text-emerald-400 shadow-glow-emerald',
-                  step.status === 'error' && 'bg-rose-500/20 text-rose-400 shadow-glow-rose'
-                )}
+                key={step.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  padding: 16,
+                  borderRadius: 8,
+                  background: step.status === 'active' ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                }}
               >
-                {step.status === 'active' ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : step.status === 'error' ? (
-                  <AlertCircle className="w-6 h-6" />
-                ) : (
-                  stepIcons[step.id] || <Clock className="w-6 h-6" />
-                )}
-              </div>
-
-              {/* Step Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3
-                    className={cn(
-                      'font-medium transition-colors',
-                      step.status === 'pending' && 'text-zinc-500',
-                      step.status === 'active' && 'text-white',
-                      step.status === 'completed' && 'text-emerald-400',
-                      step.status === 'error' && 'text-rose-400'
-                    )}
-                  >
-                    {step.nameHe}
-                  </h3>
-                  {step.status === 'completed' && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="text-emerald-400"
-                    >
-                      ✓
-                    </motion.span>
+                {/* Step Indicator */}
+                <div
+                  style={{
+                    position: 'relative',
+                    zIndex: 10,
+                    width: 56,
+                    height: 56,
+                    borderRadius: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: colors.bg,
+                    color: colors.text,
+                    flexShrink: 0,
+                  }}
+                >
+                  {step.status === 'active' ? (
+                    <Loader2 style={{ width: 24, height: 24, animation: 'spin 1s linear infinite' }} />
+                  ) : step.status === 'error' ? (
+                    <AlertCircle style={{ width: 24, height: 24 }} />
+                  ) : (
+                    stepIcons[step.id] || <Clock style={{ width: 24, height: 24 }} />
                   )}
                 </div>
-                <p className="text-sm text-zinc-500">{step.name}</p>
-                {step.error && (
-                  <p className="text-sm text-rose-400 mt-1">{step.error}</p>
-                )}
-              </div>
 
-              {/* Duration / Actions */}
-              <div className="flex items-center gap-2">
-                {step.duration && (
-                  <span
-                    className={cn(
-                      'text-sm font-mono',
-                      step.status === 'completed' ? 'text-zinc-400' : 'text-zinc-600'
+                {/* Step Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h3 style={{
+                      fontWeight: 500,
+                      margin: 0,
+                      color: step.status === 'pending' ? '#71717a'
+                        : step.status === 'active' ? 'white'
+                        : step.status === 'completed' ? '#34d399'
+                        : '#f87171',
+                    }}>
+                      {step.nameHe}
+                    </h3>
+                    {step.status === 'completed' && (
+                      <span style={{ color: '#34d399' }}>✓</span>
                     )}
-                  >
-                    {step.duration}
-                  </span>
-                )}
-                {step.status === 'error' && onRetry && (
-                  <button
-                    onClick={() => onRetry(step.id)}
-                    className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                )}
+                  </div>
+                  <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>{step.name}</p>
+                  {step.error && (
+                    <p style={{ fontSize: 14, color: '#f87171', marginTop: 4, marginBottom: 0 }}>{step.error}</p>
+                  )}
+                </div>
+
+                {/* Duration / Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {step.duration && (
+                    <span style={{
+                      fontSize: 14,
+                      fontFamily: 'monospace',
+                      color: step.status === 'completed' ? '#a1a1aa' : '#52525b',
+                    }}>
+                      {step.duration}
+                    </span>
+                  )}
+                  {step.status === 'error' && onRetry && (
+                    <button
+                      onClick={() => onRetry(step.id)}
+                      style={{
+                        padding: 8,
+                        borderRadius: 8,
+                        background: 'rgba(244, 63, 94, 0.1)',
+                        color: '#f87171',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <RotateCcw style={{ width: 16, height: 16 }} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </motion.div>
-          ))}
+            )
+          })}
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }
