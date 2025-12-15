@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Terminal as TerminalIcon, Circle } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 export type LogType = 'info' | 'success' | 'warning' | 'error' | 'system'
 
@@ -15,11 +14,11 @@ export interface LogEntry {
 }
 
 const logTypeConfig: Record<LogType, { color: string; prefix: string }> = {
-  info: { color: 'text-blue-400', prefix: '[INFO]' },
-  success: { color: 'text-emerald-400', prefix: '[OK]' },
-  warning: { color: 'text-amber-400', prefix: '[WARN]' },
-  error: { color: 'text-rose-400', prefix: '[ERR]' },
-  system: { color: 'text-purple-400', prefix: '[SYS]' },
+  info: { color: '#60a5fa', prefix: '[INFO]' },
+  success: { color: '#34d399', prefix: '[OK]' },
+  warning: { color: '#fbbf24', prefix: '[WARN]' },
+  error: { color: '#fb7185', prefix: '[ERR]' },
+  system: { color: '#a78bfa', prefix: '[SYS]' },
 }
 
 interface TerminalProps {
@@ -37,28 +36,47 @@ export function Terminal({ logs, maxHeight = 300 }: TerminalProps) {
   }, [logs])
 
   return (
-    <div className="glass-card overflow-hidden">
+    <div style={{
+      background: 'rgba(24, 24, 27, 0.8)',
+      backdropFilter: 'blur(12px)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: 12,
+      overflow: 'hidden',
+    }}>
       {/* Terminal Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-black/20">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <Circle className="w-3 h-3 fill-rose-500 text-rose-500" />
-            <Circle className="w-3 h-3 fill-amber-500 text-amber-500" />
-            <Circle className="w-3 h-3 fill-emerald-500 text-emerald-500" />
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 16px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        background: 'rgba(0, 0, 0, 0.2)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Circle style={{ width: 12, height: 12, fill: '#f43f5e', color: '#f43f5e' }} />
+            <Circle style={{ width: 12, height: 12, fill: '#f59e0b', color: '#f59e0b' }} />
+            <Circle style={{ width: 12, height: 12, fill: '#10b981', color: '#10b981' }} />
           </div>
-          <div className="flex items-center gap-2 text-zinc-400">
-            <TerminalIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">System Logs</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#a1a1aa' }}>
+            <TerminalIcon style={{ width: 16, height: 16 }} />
+            <span style={{ fontSize: 14, fontWeight: 500 }}>System Logs</span>
           </div>
         </div>
-        <span className="text-xs text-zinc-600 font-mono">rabbi-eitan-ai</span>
+        <span style={{ fontSize: 12, color: '#52525b', fontFamily: 'monospace' }}>rabbi-eitan-ai</span>
       </div>
 
       {/* Terminal Content */}
       <div
         ref={scrollRef}
-        className="terminal custom-scrollbar overflow-y-auto p-4"
-        style={{ maxHeight }}
+        style={{
+          maxHeight,
+          overflowY: 'auto',
+          padding: 16,
+          fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', monospace",
+          fontSize: 14,
+          background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(9, 9, 11, 0.95) 100%)',
+        }}
       >
         <AnimatePresence initial={false}>
           {logs.map((log, index) => (
@@ -68,33 +86,35 @@ export function Terminal({ logs, maxHeight = 300 }: TerminalProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className={cn(
-                'terminal-line flex items-start gap-3 py-1.5',
-                index === logs.length - 1 && 'bg-white/[0.02]'
-              )}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+                padding: '6px 0',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                background: index === logs.length - 1 ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
+              }}
             >
               {/* Timestamp */}
-              <span className="text-zinc-600 font-mono text-xs shrink-0">
+              <span style={{ color: '#52525b', fontFamily: 'monospace', fontSize: 12, flexShrink: 0 }}>
                 {log.timestamp}
               </span>
 
               {/* Type Prefix */}
-              <span
-                className={cn(
-                  'font-mono text-xs shrink-0',
-                  logTypeConfig[log.type].color
-                )}
-              >
+              <span style={{
+                fontFamily: 'monospace',
+                fontSize: 12,
+                flexShrink: 0,
+                color: logTypeConfig[log.type].color,
+              }}>
                 {logTypeConfig[log.type].prefix}
               </span>
 
               {/* Message */}
-              <span
-                className={cn(
-                  'text-sm',
-                  log.type === 'error' ? 'text-rose-300' : 'text-zinc-300'
-                )}
-              >
+              <span style={{
+                fontSize: 14,
+                color: log.type === 'error' ? '#fda4af' : '#d4d4d8',
+              }}>
                 {log.message}
               </span>
             </motion.div>
@@ -102,11 +122,23 @@ export function Terminal({ logs, maxHeight = 300 }: TerminalProps) {
         </AnimatePresence>
 
         {/* Cursor */}
-        <div className="flex items-center gap-2 mt-2 text-zinc-500">
-          <span className="font-mono text-sm">{'>'}</span>
-          <span className="w-2 h-4 bg-indigo-500 animate-blink" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, color: '#71717a' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 14 }}>{'>'}</span>
+          <span style={{
+            width: 8,
+            height: 16,
+            background: '#6366f1',
+            animation: 'blink 1s step-end infinite',
+          }} />
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -7,15 +7,13 @@ import {
   Download,
   RefreshCw,
   Calendar,
-  Clock,
-  Send,
-  MessageCircle,
-  MoreVertical,
   Eye,
   Trash2,
   Share2,
+  MoreVertical,
+  Send,
+  MessageCircle,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 export interface MediaItem {
   id: string
@@ -36,6 +34,28 @@ interface MediaLibraryProps {
   onDelete: (id: string) => void
 }
 
+const getStatusStyle = (status: string) => {
+  switch (status) {
+    case 'completed':
+      return { background: 'rgba(16, 185, 129, 0.2)', color: '#34d399' }
+    case 'processing':
+      return { background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24' }
+    case 'failed':
+      return { background: 'rgba(244, 63, 94, 0.2)', color: '#f87171' }
+    default:
+      return { background: '#27272a', color: '#71717a' }
+  }
+}
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'completed': return 'הושלם'
+    case 'processing': return 'בעיבוד...'
+    case 'failed': return 'נכשל'
+    default: return ''
+  }
+}
+
 export function MediaLibrary({
   items,
   onPlay,
@@ -45,43 +65,51 @@ export function MediaLibrary({
 }: MediaLibraryProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'completed' | 'processing' | 'failed'>('all')
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const filteredItems = items.filter(
     (item) => filter === 'all' || item.status === filter
   )
 
+  const filters = [
+    { id: 'all', label: 'הכל' },
+    { id: 'completed', label: 'הושלמו' },
+    { id: 'processing', label: 'בעיבוד' },
+    { id: 'failed', label: 'נכשלו' },
+  ] as const
+
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header & Filters */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>🎞️</span>
           Media Library
         </h2>
 
-        <div className="flex items-center gap-2">
-          {(['all', 'completed', 'processing', 'failed'] as const).map((f) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {filters.map((f) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-sm transition-colors',
-                filter === f
-                  ? 'bg-indigo-500/20 text-indigo-400'
-                  : 'text-zinc-500 hover:text-white'
-              )}
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 14,
+                border: 'none',
+                cursor: 'pointer',
+                background: filter === f.id ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
+                color: filter === f.id ? '#818cf8' : '#71717a',
+              }}
             >
-              {f === 'all' && 'הכל'}
-              {f === 'completed' && 'הושלמו'}
-              {f === 'processing' && 'בעיבוד'}
-              {f === 'failed' && 'נכשלו'}
+              {f.label}
             </button>
           ))}
         </div>
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
         <AnimatePresence>
           {filteredItems.map((item, index) => (
             <motion.div
@@ -90,116 +118,210 @@ export function MediaLibrary({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ delay: index * 0.05 }}
-              className="glass-card overflow-hidden group"
+              onMouseEnter={() => setHoveredId(item.id)}
+              onMouseLeave={() => setHoveredId(null)}
+              style={{
+                position: 'relative',
+                background: 'rgba(24, 24, 27, 0.8)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 12,
+                overflow: 'hidden',
+              }}
             >
               {/* Thumbnail */}
-              <div className="relative aspect-video bg-zinc-900">
+              <div style={{ position: 'relative', aspectRatio: '16/9', background: '#18181b' }}>
                 {item.thumbnail ? (
                   <img
                     src={item.thumbnail}
                     alt={item.title}
-                    className="w-full h-full object-cover"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-4xl">🎬</span>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 48 }}>🎬</span>
                   </div>
                 )}
 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(0, 0, 0, 0.6)',
+                  opacity: hoveredId === item.id ? 1 : 0,
+                  transition: 'opacity 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 12,
+                }}>
                   <button
                     onClick={() => onPlay(item.id)}
-                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                    style={{
+                      padding: 12,
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'white',
+                    }}
                   >
-                    <Play className="w-6 h-6" />
+                    <Play style={{ width: 24, height: 24 }} />
                   </button>
                   <button
                     onClick={() => onDownload(item.id)}
-                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                    style={{
+                      padding: 12,
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'white',
+                    }}
                   >
-                    <Download className="w-5 h-5" />
+                    <Download style={{ width: 20, height: 20 }} />
                   </button>
                 </div>
 
                 {/* Status Badge */}
-                <div
-                  className={cn(
-                    'absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium',
-                    item.status === 'completed' && 'bg-emerald-500/20 text-emerald-400',
-                    item.status === 'processing' && 'bg-amber-500/20 text-amber-400',
-                    item.status === 'failed' && 'bg-rose-500/20 text-rose-400'
-                  )}
-                >
-                  {item.status === 'completed' && 'הושלם'}
-                  {item.status === 'processing' && 'בעיבוד...'}
-                  {item.status === 'failed' && 'נכשל'}
+                <div style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  padding: '4px 8px',
+                  borderRadius: 4,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  ...getStatusStyle(item.status),
+                }}>
+                  {getStatusText(item.status)}
                 </div>
 
                 {/* Duration */}
-                <div className="absolute bottom-2 left-2 px-2 py-1 rounded bg-black/70 text-white text-xs font-mono">
+                <div style={{
+                  position: 'absolute',
+                  bottom: 8,
+                  left: 8,
+                  padding: '4px 8px',
+                  borderRadius: 4,
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                }}>
                   {item.duration}
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-4">
-                <h3 className="font-medium text-white truncate">{item.title}</h3>
+              <div style={{ padding: 16 }}>
+                <h3 style={{ fontWeight: 500, color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {item.title}
+                </h3>
 
-                <div className="flex items-center gap-3 mt-2 text-sm text-zinc-500">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, fontSize: 14, color: '#71717a' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Calendar style={{ width: 14, height: 14 }} />
                     {item.date}
                   </span>
                   {item.views !== undefined && (
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-3.5 h-3.5" />
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Eye style={{ width: 14, height: 14 }} />
                       {item.views}
                     </span>
                   )}
                 </div>
 
                 {/* Distribution Badges */}
-                <div className="flex items-center gap-2 mt-3">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
                   {item.sentTo.includes('telegram') && (
-                    <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs">
-                      <Send className="w-3 h-3" />
+                    <span style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '4px 8px',
+                      borderRadius: 9999,
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      color: '#60a5fa',
+                      fontSize: 12,
+                    }}>
+                      <Send style={{ width: 12, height: 12 }} />
                       Telegram
                     </span>
                   )}
                   {item.sentTo.includes('whatsapp') && (
-                    <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 text-green-400 text-xs">
-                      <MessageCircle className="w-3 h-3" />
+                    <span style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '4px 8px',
+                      borderRadius: 9999,
+                      background: 'rgba(34, 197, 94, 0.1)',
+                      color: '#4ade80',
+                      fontSize: 12,
+                    }}>
+                      <MessageCircle style={{ width: 12, height: 12 }} />
                       WhatsApp
                     </span>
                   )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: 16,
+                  paddingTop: 16,
+                  borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                }}>
                   {item.status === 'failed' ? (
                     <button
                       onClick={() => onRegenerate(item.id)}
-                      className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition-colors"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: 14,
+                        color: '#fbbf24',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <RefreshCw style={{ width: 16, height: 16 }} />
                       נסה שוב
                     </button>
                   ) : (
                     <button
-                      onClick={() => {}}
-                      className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: 14,
+                        color: '#a1a1aa',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
                     >
-                      <Share2 className="w-4 h-4" />
+                      <Share2 style={{ width: 16, height: 16 }} />
                       שתף
                     </button>
                   )}
 
                   <button
                     onClick={() => setSelectedId(selectedId === item.id ? null : item.id)}
-                    className="p-1.5 rounded hover:bg-white/5 text-zinc-500 hover:text-white transition-colors"
+                    style={{
+                      padding: 6,
+                      borderRadius: 4,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#71717a',
+                    }}
                   >
-                    <MoreVertical className="w-4 h-4" />
+                    <MoreVertical style={{ width: 16, height: 16 }} />
                   </button>
                 </div>
 
@@ -210,16 +332,37 @@ export function MediaLibrary({
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute left-4 bottom-16 bg-zinc-800 border border-white/10 rounded-lg overflow-hidden shadow-xl z-10"
+                      style={{
+                        position: 'absolute',
+                        left: 16,
+                        bottom: 64,
+                        background: '#27272a',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
+                        zIndex: 10,
+                      }}
                     >
                       <button
                         onClick={() => {
                           onDelete(item.id)
                           setSelectedId(null)
                         }}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10 w-full"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '8px 16px',
+                          fontSize: 14,
+                          color: '#f87171',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          width: '100%',
+                        }}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 style={{ width: 16, height: 16 }} />
                         מחק
                       </button>
                     </motion.div>
@@ -236,11 +379,11 @@ export function MediaLibrary({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-16"
+          style={{ textAlign: 'center', padding: '64px 0' }}
         >
-          <span className="text-5xl mb-4 block">📭</span>
-          <h3 className="text-lg font-medium text-white mb-2">אין תוכן להצגה</h3>
-          <p className="text-zinc-500">
+          <span style={{ fontSize: 48, display: 'block', marginBottom: 16 }}>📭</span>
+          <h3 style={{ fontSize: 18, fontWeight: 500, color: 'white', margin: 0, marginBottom: 8 }}>אין תוכן להצגה</h3>
+          <p style={{ color: '#71717a', margin: 0 }}>
             {filter === 'all'
               ? 'התחל ליצור תוכן חדש'
               : 'אין פריטים בסטטוס זה'}

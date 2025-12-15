@@ -13,7 +13,6 @@ import {
   MessageSquare,
   Volume2,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface ApprovalInterfaceProps {
   script: string
@@ -107,40 +106,68 @@ export function ApprovalInterface({
     }
   }
 
+  const glassCardStyle = {
+    background: 'rgba(24, 24, 27, 0.8)',
+    backdropFilter: 'blur(12px)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    padding: 24,
+  }
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, height: '100%' }}>
       {/* Left Side - Script */}
-      <div className="glass-card p-6 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+      <div style={{ ...glassCardStyle, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>📝</span>
             סקריפט לאישור
           </h2>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              isEditing
-                ? 'bg-indigo-500/20 text-indigo-400'
-                : 'bg-zinc-800 text-zinc-400 hover:text-white'
-            )}
+            style={{
+              padding: 8,
+              borderRadius: 8,
+              border: 'none',
+              cursor: 'pointer',
+              background: isEditing ? 'rgba(99, 102, 241, 0.2)' : '#27272a',
+              color: isEditing ? '#818cf8' : '#a1a1aa',
+            }}
           >
-            <Edit3 className="w-4 h-4" />
+            <Edit3 style={{ width: 16, height: 16 }} />
           </button>
         </div>
 
         {/* Script Content */}
-        <div className="flex-1 min-h-0">
+        <div style={{ flex: 1, minHeight: 0 }}>
           {isEditing ? (
             <textarea
               value={editedScript}
               onChange={(e) => setEditedScript(e.target.value)}
-              className="w-full h-full p-4 bg-zinc-900/50 border border-white/10 rounded-lg text-white text-lg leading-relaxed resize-none focus:outline-none focus:border-indigo-500/50"
               dir="rtl"
+              style={{
+                width: '100%',
+                height: '100%',
+                padding: 16,
+                background: 'rgba(24, 24, 27, 0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 8,
+                color: 'white',
+                fontSize: 18,
+                lineHeight: 1.8,
+                resize: 'none',
+                outline: 'none',
+              }}
             />
           ) : (
-            <div className="h-full overflow-y-auto custom-scrollbar p-4 bg-zinc-900/30 rounded-lg">
-              <p className="text-lg text-zinc-200 leading-relaxed whitespace-pre-wrap" dir="rtl">
+            <div style={{
+              height: '100%',
+              overflowY: 'auto',
+              padding: 16,
+              background: 'rgba(24, 24, 27, 0.3)',
+              borderRadius: 8,
+            }}>
+              <p style={{ fontSize: 18, color: '#e4e4e7', lineHeight: 1.8, whiteSpace: 'pre-wrap', margin: 0 }} dir="rtl">
                 {script}
               </p>
             </div>
@@ -154,13 +181,27 @@ export function ApprovalInterface({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="flex items-center gap-2 mt-4"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}
             >
               <button
                 onClick={handleSaveEdit}
-                className="flex-1 glow-button flex items-center justify-center gap-2"
+                style={{
+                  flex: 1,
+                  padding: '12px 24px',
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  color: 'white',
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
               >
-                <Check className="w-4 h-4" />
+                <Check style={{ width: 16, height: 16 }} />
                 שמור שינויים
               </button>
               <button
@@ -168,57 +209,76 @@ export function ApprovalInterface({
                   setEditedScript(script)
                   setIsEditing(false)
                 }}
-                className="px-4 py-3 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  background: '#27272a',
+                  color: '#a1a1aa',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
               >
-                <X className="w-4 h-4" />
+                <X style={{ width: 16, height: 16 }} />
               </button>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Word Count */}
-        <div className="mt-4 text-sm text-zinc-500 text-center">
+        <div style={{ marginTop: 16, fontSize: 14, color: '#71717a', textAlign: 'center' }}>
           {script.split(/\s+/).length} מילים • ~{Math.ceil(script.length / 15)} שניות
         </div>
       </div>
 
       {/* Right Side - Feedback & Actions */}
-      <div className="glass-card p-6 flex flex-col">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div style={{ ...glassCardStyle, display: 'flex', flexDirection: 'column' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'white', margin: 0, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>💬</span>
           משוב והערות
         </h2>
 
         {/* Feedback Mode Selection */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
           <button
             onClick={() => setFeedbackMode('text')}
-            className={cn(
-              'p-4 rounded-lg border transition-all flex flex-col items-center gap-2',
-              feedbackMode === 'text'
-                ? 'border-indigo-500/50 bg-indigo-500/10 text-white'
-                : 'border-white/10 bg-zinc-900/50 text-zinc-400 hover:border-white/20'
-            )}
+            style={{
+              padding: 16,
+              borderRadius: 8,
+              border: feedbackMode === 'text' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+              background: feedbackMode === 'text' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(24, 24, 27, 0.5)',
+              color: feedbackMode === 'text' ? 'white' : '#a1a1aa',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 8,
+            }}
           >
-            <MessageSquare className="w-6 h-6" />
-            <span className="text-sm">הערה בטקסט</span>
+            <MessageSquare style={{ width: 24, height: 24 }} />
+            <span style={{ fontSize: 14 }}>הערה בטקסט</span>
           </button>
           <button
             onClick={() => setFeedbackMode('voice')}
-            className={cn(
-              'p-4 rounded-lg border transition-all flex flex-col items-center gap-2',
-              feedbackMode === 'voice'
-                ? 'border-indigo-500/50 bg-indigo-500/10 text-white'
-                : 'border-white/10 bg-zinc-900/50 text-zinc-400 hover:border-white/20'
-            )}
+            style={{
+              padding: 16,
+              borderRadius: 8,
+              border: feedbackMode === 'voice' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+              background: feedbackMode === 'voice' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(24, 24, 27, 0.5)',
+              color: feedbackMode === 'voice' ? 'white' : '#a1a1aa',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 8,
+            }}
           >
-            <Volume2 className="w-6 h-6" />
-            <span className="text-sm">הקלטה קולית</span>
+            <Volume2 style={{ width: 24, height: 24 }} />
+            <span style={{ fontSize: 14 }}>הקלטה קולית</span>
           </button>
         </div>
 
         {/* Feedback Input */}
-        <div className="flex-1 min-h-0">
+        <div style={{ flex: 1, minHeight: 0 }}>
           <AnimatePresence mode="wait">
             {feedbackMode === 'text' && (
               <motion.div
@@ -226,21 +286,46 @@ export function ApprovalInterface({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="h-full flex flex-col"
+                style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
               >
                 <textarea
                   value={textFeedback}
                   onChange={(e) => setTextFeedback(e.target.value)}
                   placeholder="כתוב את ההערות שלך כאן..."
-                  className="flex-1 w-full p-4 bg-zinc-900/50 border border-white/10 rounded-lg text-white resize-none focus:outline-none focus:border-indigo-500/50"
                   dir="rtl"
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    padding: 16,
+                    background: 'rgba(24, 24, 27, 0.5)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 8,
+                    color: 'white',
+                    resize: 'none',
+                    outline: 'none',
+                  }}
                 />
                 <button
                   onClick={handleSendFeedback}
                   disabled={!textFeedback.trim()}
-                  className="mt-3 glow-button flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{
+                    marginTop: 12,
+                    padding: '12px 24px',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    color: 'white',
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
+                    border: 'none',
+                    cursor: textFeedback.trim() ? 'pointer' : 'not-allowed',
+                    opacity: textFeedback.trim() ? 1 : 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
                 >
-                  <Send className="w-4 h-4" />
+                  <Send style={{ width: 16, height: 16 }} />
                   שלח משוב
                 </button>
               </motion.div>
@@ -252,19 +337,27 @@ export function ApprovalInterface({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="h-full flex flex-col items-center justify-center"
+                style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
               >
                 {/* Waveform Animation */}
                 {isRecording && (
-                  <div className="waveform mb-4">
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 32, marginBottom: 16 }}>
                     {[...Array(5)].map((_, i) => (
-                      <div key={i} className="waveform-bar" />
+                      <div
+                        key={i}
+                        style={{
+                          width: 4,
+                          background: '#6366f1',
+                          borderRadius: 2,
+                          animation: `wave 0.5s ease-in-out infinite ${i * 0.1}s`,
+                        }}
+                      />
                     ))}
                   </div>
                 )}
 
                 {/* Recording Time */}
-                <div className="text-3xl font-mono text-white mb-6">
+                <div style={{ fontSize: 32, fontFamily: 'monospace', color: 'white', marginBottom: 24 }}>
                   {formatTime(recordingTime)}
                 </div>
 
@@ -275,21 +368,29 @@ export function ApprovalInterface({
                   onMouseLeave={stopRecording}
                   onTouchStart={startRecording}
                   onTouchEnd={stopRecording}
-                  className={cn(
-                    'w-24 h-24 rounded-full flex items-center justify-center transition-all',
-                    isRecording
-                      ? 'bg-rose-500 shadow-glow-rose scale-110'
-                      : 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-glow-md hover:scale-105'
-                  )}
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: '50%',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: isRecording ? '#f43f5e' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    boxShadow: isRecording ? '0 0 30px rgba(244, 63, 94, 0.5)' : '0 0 30px rgba(99, 102, 241, 0.5)',
+                    transform: isRecording ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'all 0.2s ease',
+                  }}
                 >
                   {isRecording ? (
-                    <MicOff className="w-10 h-10 text-white" />
+                    <MicOff style={{ width: 40, height: 40, color: 'white' }} />
                   ) : (
-                    <Mic className="w-10 h-10 text-white" />
+                    <Mic style={{ width: 40, height: 40, color: 'white' }} />
                   )}
                 </button>
 
-                <p className="text-sm text-zinc-500 mt-4">
+                <p style={{ fontSize: 14, color: '#71717a', marginTop: 16 }}>
                   {isRecording ? 'שחרר לסיום ההקלטה' : 'לחץ והחזק להקלטה'}
                 </p>
               </motion.div>
@@ -301,9 +402,9 @@ export function ApprovalInterface({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="h-full flex items-center justify-center"
+                style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                <p className="text-zinc-500 text-center">
+                <p style={{ color: '#71717a', textAlign: 'center' }}>
                   בחר אופן משוב למעלה
                 </p>
               </motion.div>
@@ -312,29 +413,73 @@ export function ApprovalInterface({
         </div>
 
         {/* Main Actions */}
-        <div className="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-white/5">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 12,
+          marginTop: 24,
+          paddingTop: 24,
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+        }}>
           <button
             onClick={onApprove}
             disabled={isProcessing}
-            className="p-4 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-semibold hover:bg-emerald-500/30 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{
+              padding: 16,
+              borderRadius: 8,
+              background: 'rgba(16, 185, 129, 0.2)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              color: '#34d399',
+              fontWeight: 600,
+              cursor: isProcessing ? 'not-allowed' : 'pointer',
+              opacity: isProcessing ? 0.5 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
           >
             {isProcessing ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
+              <RefreshCw style={{ width: 20, height: 20, animation: 'spin 1s linear infinite' }} />
             ) : (
-              <Check className="w-5 h-5" />
+              <Check style={{ width: 20, height: 20 }} />
             )}
             אישור
           </button>
           <button
             onClick={onReject}
             disabled={isProcessing}
-            className="p-4 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-400 font-semibold hover:bg-rose-500/30 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{
+              padding: 16,
+              borderRadius: 8,
+              background: 'rgba(244, 63, 94, 0.2)',
+              border: '1px solid rgba(244, 63, 94, 0.3)',
+              color: '#f87171',
+              fontWeight: 600,
+              cursor: isProcessing ? 'not-allowed' : 'pointer',
+              opacity: isProcessing ? 0.5 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
           >
-            <X className="w-5 h-5" />
+            <X style={{ width: 20, height: 20 }} />
             דחייה
           </button>
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes wave {
+          0%, 100% { height: 8px; }
+          50% { height: 24px; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }
